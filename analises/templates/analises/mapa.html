@@ -1,0 +1,6175 @@
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>H2V-Siting Brasil</title>
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+    ></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                Inter,
+                Arial,
+                Helvetica,
+                sans-serif;
+            background: #f4f7f6;
+            color: #18251f;
+        }
+
+        .topo {
+            background: #0b4d3b;
+            color: white;
+            padding: 15px 24px;
+        }
+
+        .topo-conteudo,
+        .pagina {
+            width: min(1500px, 100%);
+            margin: 0 auto;
+        }
+
+        .marca {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .marca-icone {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.13
+                );
+            font-size: 22px;
+        }
+
+        .marca h1 {
+            margin: 0;
+            font-size: 25px;
+        }
+
+        .marca p {
+            margin: 4px 0 0;
+            color: #d1e3dc;
+            font-size: 13px;
+        }
+
+        .pagina {
+            padding: 24px;
+        }
+
+        .cabecalho {
+            margin-bottom: 17px;
+        }
+
+        .cabecalho h2 {
+            margin: 0 0 5px;
+            font-size: 22px;
+        }
+
+        .cabecalho p {
+            margin: 0;
+            color: #68756f;
+            font-size: 13px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 2.3fr)
+                minmax(360px, 0.9fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card {
+            background: white;
+            border:
+                1px solid #dfe7e3;
+            border-radius: 13px;
+            overflow: hidden;
+            box-shadow:
+                0 2px 8px
+                rgba(0, 0, 0, 0.04);
+        }
+
+        .card-titulo {
+            padding: 14px 18px;
+            border-bottom:
+                1px solid #e6ece9;
+        }
+
+        .card-titulo h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .card-titulo p {
+            margin: 4px 0 0;
+            color: #6f7975;
+            font-size: 12px;
+        }
+
+        .mapa-aviso {
+            padding: 9px 14px;
+            background: #f7faf9;
+            border-bottom:
+                1px solid #e7eeeb;
+            color: #64726c;
+            font-size: 10px;
+            line-height: 1.45;
+        }
+
+        .mapa-aviso strong {
+            color: #315d50;
+        }
+
+        #mapa {
+            width: 100%;
+            height: 520px;
+        }
+
+        .painel {
+            padding: 18px;
+        }
+
+        .secao {
+            margin-bottom: 20px;
+        }
+
+        .secao-titulo {
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #24352e;
+        }
+
+        .coordenadas,
+        .parametros {
+            display: grid;
+            grid-template-columns:
+                1fr 1fr;
+            gap: 11px;
+        }
+
+        .campo {
+            position: relative;
+        }
+
+        .campo label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #59645f;
+        }
+
+        .campo input {
+            width: 100%;
+            border:
+                1px solid #d3ddd8;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+            color: #25322d;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .campo input:focus {
+            border-color: #08795b;
+            box-shadow:
+                0 0 0 3px
+                rgba(8, 121, 91, 0.10);
+        }
+
+        .campo-unidade input {
+            padding-right: 58px;
+        }
+
+        .unidade {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            color: #89938e;
+            font-size: 10px;
+            pointer-events: none;
+        }
+
+        .botao {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            background: #08795b;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .botao:hover:not(:disabled) {
+            background: #056449;
+        }
+
+        .botao:disabled {
+            background: #b9c5c0;
+            cursor: not-allowed;
+        }
+
+        .erro {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 9px;
+            background: #fff0f0;
+            border:
+                1px solid #efc8c8;
+            color: #942b2b;
+            font-size: 12px;
+        }
+
+        .resultados {
+            margin-top: 20px;
+        }
+
+        .resultados-titulo {
+            margin-bottom: 14px;
+            display: flex;
+            justify-content:
+                space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .resultados-titulo h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .fonte {
+            color: #77827d;
+            font-size: 10px;
+        }
+
+        .cards-resultado {
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(
+                        220px,
+                        1fr
+                    )
+                );
+            gap: 14px;
+        }
+
+        .resultado-card {
+            background: white;
+            border:
+                1px solid #dfe7e3;
+            border-radius: 14px;
+            padding: 18px 18px 16px;
+            min-height: 150px;
+            box-shadow:
+                0 1px 4px
+                rgba(0, 0, 0, 0.03);
+        }
+
+        .resultado-card.recurso-card {
+            background: #f8fbfa;
+            border-color: #cfe2db;
+        }
+
+        .resultado-label {
+            margin-bottom: 12px;
+            color: #6c7973;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .resultado-valor {
+            color: #123f32;
+            font-size: 42px;
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .resultado-valor span {
+            color: #718079;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .resultado-nome {
+            color: #123f32;
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1.25;
+            min-height: 50px;
+        }
+
+        .resultado-valor-distancia {
+            color: #0b4d3b;
+            font-size: 36px;
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-top: 8px;
+        }
+
+        .resultado-valor-distancia span {
+            color: #5f706a;
+            font-size: 13px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        .resultado-secundario {
+            margin-top: 12px;
+            color: #5f6d67;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .resultado-apoio {
+            margin-top: 6px;
+            color: #7a8681;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .resultado-badge {
+            display: inline-flex;
+            margin-top: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e5f1ec;
+            color: #0b4d3b;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .opcoes-hidricas {
+            margin-top: 14px;
+            padding: 16px;
+            background: #ffffff;
+            border: 1px solid #dfe7e3;
+            border-radius: 12px;
+        }
+
+        .opcoes-hidricas-topo {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .opcoes-hidricas h4 {
+            margin: 0 0 4px;
+            font-size: 14px;
+            color: #20352d;
+        }
+
+        .opcoes-hidricas p {
+            margin: 0;
+            color: #74807b;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .trecho-mais-proximo {
+            min-width: 155px;
+            padding: 9px 11px;
+            background: #f6f9f8;
+            border: 1px solid #e0e9e5;
+            border-radius: 9px;
+            text-align: right;
+        }
+
+        .trecho-mais-proximo span,
+        .trecho-mais-proximo small {
+            display: block;
+            color: #7b8681;
+            font-size: 9px;
+        }
+
+        .trecho-mais-proximo strong {
+            display: block;
+            margin: 2px 0;
+            color: #23493d;
+            font-size: 15px;
+        }
+
+        .lista-candidatos {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .candidato-hidrico {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 88px;
+            padding: 12px;
+            border: 1px solid #dfe7e3;
+            border-radius: 10px;
+            background: #fbfcfc;
+        }
+
+        .candidato-hidrico.selecionado {
+            border-color: #84bbaa;
+            background: #eef7f3;
+            box-shadow: 0 0 0 2px rgba(8, 121, 91, 0.05);
+        }
+
+        .candidato-indice {
+            flex: 0 0 30px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #e7f1ed;
+            color: #0b5d47;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .candidato-conteudo {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .candidato-nome {
+            color: #1f372f;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .candidato-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 7px;
+            color: #718079;
+            font-size: 10px;
+        }
+
+        .candidato-meta strong {
+            color: #0b5d47;
+            font-size: 11px;
+        }
+
+        .tag-identificado,
+        .tag-anonimo {
+            padding: 3px 6px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .tag-identificado {
+            background: #dff1e9;
+            color: #09684d;
+        }
+
+        .tag-anonimo {
+            background: #f0f1f1;
+            color: #7a817e;
+        }
+
+        .botao-recurso {
+            flex: 0 0 auto;
+            border: 1px solid #b7d4ca;
+            border-radius: 7px;
+            padding: 7px 9px;
+            background: white;
+            color: #08795b;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .botao-recurso:hover {
+            background: #edf7f3;
+        }
+
+        .candidato-status {
+            flex: 0 0 auto;
+            padding: 6px 8px;
+            border-radius: 999px;
+            background: #08795b;
+            color: white;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .detalhes {
+            margin-top: 12px;
+            background: white;
+            border:
+                1px solid #dfe7e3;
+            border-radius: 10px;
+        }
+
+        .detalhes summary {
+            padding: 12px 14px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            color: #496158;
+        }
+
+        .detalhes-conteudo {
+            padding:
+                0 14px 14px;
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(
+                        170px,
+                        1fr
+                    )
+                );
+            gap: 12px;
+        }
+
+        .detalhe small {
+            display: block;
+            color: #89938e;
+            font-size: 10px;
+        }
+
+        .detalhe strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 12px;
+            color: #31423b;
+        }
+
+        .aviso {
+            margin-top: 12px;
+            color: #78847e;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        /* MARCADORES DO MAPA */
+
+        .icone-planta {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #0b4d3b;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid white;
+            box-shadow:
+                0 2px 8px
+                rgba(0, 0, 0, 0.35);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .icone-agua {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border:
+                3px solid #168bd2;
+            box-shadow:
+                0 2px 9px
+                rgba(0, 0, 0, 0.35);
+            font-size: 20px;
+        }
+
+        .tooltip-agua {
+            background: #ffffff;
+            color: #0a557e;
+            border:
+                1px solid #9fd4f0;
+            box-shadow:
+                0 2px 6px
+                rgba(0, 0, 0, 0.14);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .mapa-legenda {
+            padding: 8px 10px;
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.95
+                );
+            border-radius: 7px;
+            box-shadow:
+                0 1px 5px
+                rgba(0, 0, 0, 0.20);
+            font-size: 10px;
+            line-height: 1.7;
+            color: #33443d;
+        }
+
+        .legenda-linha {
+            display: inline-block;
+            width: 22px;
+            height: 0;
+            border-top:
+                3px solid #168bd2;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .legenda-distancia {
+            display: inline-block;
+            width: 22px;
+            height: 0;
+            border-top:
+                2px dashed #52615c;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+
+        /* =====================================================
+           MONITORAMENTO FLUVIOMÉTRICO
+        ===================================================== */
+
+        .monitoramento-vazao {
+            margin-top: 14px;
+            background: white;
+            border: 1px solid #dfe7e3;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .monitoramento-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .monitoramento-topo h4 {
+            margin: 0 0 4px;
+            font-size: 14px;
+            color: #24352e;
+        }
+
+        .monitoramento-topo p {
+            margin: 0;
+            color: #748079;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .status-api {
+            flex: 0 0 auto;
+            padding: 6px 9px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .status-api.ativa {
+            background: #e5f1ec;
+            color: #0b4d3b;
+        }
+
+        .status-api.pendente {
+            background: #fff6df;
+            color: #806000;
+        }
+
+        .estacao-destaque {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 14px;
+            padding: 14px;
+            background: #f8fbfa;
+            border: 1px solid #dceae4;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .estacao-nome {
+            font-size: 17px;
+            font-weight: 800;
+            color: #123f32;
+            line-height: 1.25;
+        }
+
+        .estacao-codigo {
+            margin-top: 5px;
+            color: #66756f;
+            font-size: 11px;
+        }
+
+        .estacao-local {
+            margin-top: 8px;
+            color: #596a63;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .tags-estacao {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 9px;
+        }
+
+        .tag-estacao {
+            padding: 4px 7px;
+            border-radius: 999px;
+            background: #edf3f0;
+            color: #486058;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .tag-estacao.destaque {
+            background: #dcefe7;
+            color: #086246;
+        }
+
+        .vazao-resumo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .vazao-item {
+            padding: 9px 10px;
+            border: 1px solid #e3ebe7;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .vazao-item small {
+            display: block;
+            color: #829089;
+            font-size: 9px;
+            margin-bottom: 3px;
+        }
+
+        .vazao-item strong {
+            display: block;
+            color: #123f32;
+            font-size: 17px;
+        }
+
+        .vazao-item strong span {
+            font-size: 9px;
+            color: #708079;
+            font-weight: 600;
+        }
+
+        .integracao-pendente {
+            padding: 12px 13px;
+            background: #fff9e9;
+            border: 1px solid #efe0a8;
+            border-radius: 9px;
+            color: #6f5a12;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .integracao-pendente code {
+            font-size: 10px;
+        }
+
+        .sem-vazao {
+            padding: 12px 13px;
+            background: #f5f8f7;
+            border: 1px solid #dfe8e4;
+            border-radius: 9px;
+            color: #64716b;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .estacoes-lista {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .estacao-candidata {
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 11px;
+            border: 1px solid #e0e8e4;
+            border-radius: 9px;
+            background: #fff;
+        }
+
+        .estacao-candidata.selecionada {
+            border-color: #8bc9b5;
+            background: #f4fbf8;
+        }
+
+        .estacao-indice {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #edf3f0;
+            color: #37564c;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .estacao-candidata.selecionada .estacao-indice {
+            background: #08795b;
+            color: white;
+        }
+
+        .estacao-candidata-nome {
+            color: #263a32;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .estacao-candidata-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px 8px;
+            margin-top: 3px;
+            color: #78837e;
+            font-size: 9px;
+        }
+
+        .botao-estacao {
+            border: 1px solid #a7cdbf;
+            border-radius: 7px;
+            padding: 6px 9px;
+            background: white;
+            color: #08795b;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .botao-estacao:hover {
+            background: #edf8f4;
+        }
+
+        .estacao-em-uso {
+            color: #08795b;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .comparacao-vazao {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #eff8f4;
+            border-radius: 8px;
+            color: #31574a;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .icone-estacao {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #64776f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #30483f;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
+        }
+
+        .icone-estacao.selecionada {
+            border-color: #7a3ea1;
+            background: #f8f0fc;
+            color: #6a2d92;
+        }
+
+        .tooltip-estacao {
+            background: white;
+            color: #4c355e;
+            border: 1px solid #d6bfe4;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+
+        /* =====================================================
+           LEITURA RÁPIDA
+        ===================================================== */
+
+        .leitura-rapida {
+            margin-bottom: 16px;
+            padding: 18px;
+            background: white;
+            border: 1px solid #dfe7e3;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.035);
+        }
+
+        .leitura-rapida-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 15px;
+        }
+
+        .leitura-rapida-topo h4 {
+            margin: 0 0 4px;
+            color: #1e3129;
+            font-size: 17px;
+        }
+
+        .leitura-rapida-topo p {
+            margin: 0;
+            color: #738079;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .indicadores-visuais {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .indicador-visual {
+            position: relative;
+            min-height: 142px;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e1e8e5;
+            background: #fafcfb;
+            overflow: hidden;
+        }
+
+        .indicador-visual::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+        }
+
+        .indicador-visual.alto::before {
+            background: #16885e;
+        }
+
+        .indicador-visual.medio::before {
+            background: #d79b20;
+        }
+
+        .indicador-visual.baixo::before {
+            background: #c65050;
+        }
+
+        .indicador-icone {
+            font-size: 23px;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .indicador-titulo {
+            color: #52615b;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .indicador-faixa {
+            margin: 5px 0 3px;
+            font-size: 22px;
+            line-height: 1;
+            font-weight: 850;
+        }
+
+        .indicador-visual.alto .indicador-faixa {
+            color: #087452;
+        }
+
+        .indicador-visual.medio .indicador-faixa {
+            color: #a9750e;
+        }
+
+        .indicador-visual.baixo .indicador-faixa {
+            color: #ad3f3f;
+        }
+
+        .indicador-numero {
+            color: #2e4038;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .indicador-explicacao {
+            margin-top: 8px;
+            color: #748079;
+            font-size: 10px;
+            line-height: 1.45;
+        }
+
+        .faixa-legenda {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            color: #738079;
+            font-size: 9px;
+        }
+
+        .bolinha {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .bolinha.alto {
+            background: #16885e;
+        }
+
+        .bolinha.medio {
+            background: #d79b20;
+        }
+
+        .bolinha.baixo {
+            background: #c65050;
+        }
+
+        /* =====================================================
+           INTERPRETAÇÃO PARA LEIGO
+        ===================================================== */
+
+        .interpretacao {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+            gap: 12px;
+        }
+
+        .interpretacao-card {
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #dfe7e3;
+            background: #ffffff;
+        }
+
+        .interpretacao-card.destaque {
+            background: #eff8f4;
+            border-color: #cae4d9;
+        }
+
+        .interpretacao-titulo {
+            margin-bottom: 9px;
+            color: #263931;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .interpretacao-lista {
+            display: grid;
+            gap: 8px;
+        }
+
+        .interpretacao-item {
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            gap: 8px;
+            align-items: start;
+        }
+
+        .interpretacao-item-icone {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #edf4f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .interpretacao-item strong {
+            display: block;
+            color: #31443b;
+            font-size: 11px;
+            margin-bottom: 2px;
+        }
+
+        .interpretacao-item p {
+            margin: 0;
+            color: #718078;
+            font-size: 10px;
+            line-height: 1.45;
+        }
+
+        .fontes-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .fonte-status {
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            gap: 8px;
+            align-items: center;
+            padding: 9px 10px;
+            background: white;
+            border: 1px solid #dfe7e3;
+            border-radius: 9px;
+        }
+
+        .fonte-status-icone {
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .fonte-status strong {
+            display: block;
+            color: #30443a;
+            font-size: 11px;
+        }
+
+        .fonte-status small {
+            display: block;
+            margin-top: 2px;
+            color: #7a8781;
+            font-size: 9px;
+            line-height: 1.3;
+        }
+
+        .status-pill {
+            padding: 5px 7px;
+            border-radius: 999px;
+            font-size: 8px;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-pill.avaliado {
+            background: #def0e8;
+            color: #087452;
+        }
+
+        .status-pill.pendente {
+            background: #f2f3f2;
+            color: #737d78;
+        }
+
+        .observacao-metodo {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dce9e3;
+            color: #728078;
+            font-size: 9px;
+            line-height: 1.45;
+        }
+
+        /* =====================================================
+           MODO SIMPLES / TÉCNICO
+        ===================================================== */
+
+        .controle-modo {
+            display: inline-flex;
+            padding: 3px;
+            background: #edf2f0;
+            border-radius: 9px;
+            gap: 2px;
+        }
+
+        .botao-modo {
+            border: none;
+            padding: 7px 10px;
+            border-radius: 7px;
+            background: transparent;
+            color: #65736c;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .botao-modo.ativo {
+            background: white;
+            color: #0b4d3b;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        body.modo-simples .somente-tecnico {
+            display: none !important;
+        }
+
+        .resultado-card {
+            transition: transform 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .resultado-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 14px rgba(0, 0, 0, 0.065);
+        }
+
+        .cards-resultado .resultado-label::before {
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .cards-resultado .resultado-card:nth-child(1) .resultado-label::before {
+            content: "☀";
+        }
+
+        .cards-resultado .resultado-card:nth-child(2) .resultado-label::before {
+            content: "🌬️";
+        }
+
+        .cards-resultado .resultado-card:nth-child(3) .resultado-label::before {
+            content: "⚡";
+        }
+
+        .cards-resultado .resultado-card:nth-child(4) .resultado-label::before {
+            content: "H₂";
+            font-size: 9px;
+        }
+
+        .cards-resultado .resultado-card:nth-child(5) .resultado-label::before {
+            content: "💧";
+        }
+
+
+        .botao.analisando {
+            position: relative;
+            background: #0b654f;
+            cursor: wait;
+        }
+
+        .botao.analisando::before {
+            content: "";
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            margin-right: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.45);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            vertical-align: -2px;
+            animation: h2v-girar 0.7s linear infinite;
+        }
+
+        @keyframes h2v-girar {
+            to { transform: rotate(360deg); }
+        }
+
+
+        /* =====================================================
+           AJUSTE DE LEGIBILIDADE
+        ===================================================== */
+
+        body {
+            font-size: 15px;
+        }
+
+        .marca p {
+            font-size: 14px;
+        }
+
+        .cabecalho p {
+            font-size: 14px;
+        }
+
+        .card-titulo h3 {
+            font-size: 17px;
+        }
+
+        .card-titulo p {
+            font-size: 13px;
+        }
+
+        .mapa-aviso {
+            font-size: 12px;
+        }
+
+        .secao-titulo {
+            font-size: 15px;
+        }
+
+        .campo label {
+            font-size: 12px;
+        }
+
+        .campo input {
+            font-size: 14px;
+            padding: 11px;
+        }
+
+        .unidade {
+            font-size: 11px;
+        }
+
+        .botao {
+            font-size: 14px;
+            padding: 13px 16px;
+        }
+
+        .resultados-titulo h3 {
+            font-size: 18px;
+        }
+
+        .fonte {
+            font-size: 11px;
+        }
+
+        .resultado-label {
+            font-size: 12px;
+        }
+
+        .resultado-valor {
+            font-size: 44px;
+        }
+
+        .resultado-valor span {
+            font-size: 14px;
+        }
+
+        .resultado-secundario {
+            font-size: 13px;
+        }
+
+        .resultado-apoio {
+            font-size: 13px;
+        }
+
+        .resultado-badge {
+            font-size: 12px;
+            padding: 7px 11px;
+        }
+
+        .resultado-nome {
+            font-size: 21px;
+        }
+
+        .resultado-valor-distancia {
+            font-size: 38px;
+        }
+
+        .resultado-valor-distancia span {
+            font-size: 14px;
+        }
+
+        .leitura-rapida-topo h4 {
+            font-size: 18px;
+        }
+
+        .leitura-rapida-topo p {
+            font-size: 12px;
+        }
+
+        .faixa-legenda {
+            font-size: 11px;
+        }
+
+        .bolinha {
+            width: 10px;
+            height: 10px;
+        }
+
+        .indicador-visual {
+            min-height: 155px;
+            padding: 17px;
+        }
+
+        .indicador-icone {
+            font-size: 30px;
+            margin-bottom: 11px;
+        }
+
+        .indicador-titulo {
+            font-size: 11px;
+        }
+
+        .indicador-faixa {
+            font-size: 25px;
+        }
+
+        .indicador-numero {
+            font-size: 14px;
+        }
+
+        .indicador-explicacao {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .interpretacao-titulo {
+            font-size: 14px;
+        }
+
+        .interpretacao-item {
+            grid-template-columns: 34px 1fr;
+        }
+
+        .interpretacao-item-icone {
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+        }
+
+        .interpretacao-item strong {
+            font-size: 12px;
+        }
+
+        .interpretacao-item p {
+            font-size: 11px;
+        }
+
+        .fonte-status {
+            grid-template-columns: 40px 1fr auto;
+            padding: 10px 11px;
+        }
+
+        .fonte-status-icone {
+            font-size: 22px;
+        }
+
+        .fonte-status strong {
+            font-size: 12px;
+        }
+
+        .fonte-status small {
+            font-size: 10px;
+        }
+
+        .status-pill {
+            font-size: 9px;
+            padding: 6px 8px;
+        }
+
+        .observacao-metodo {
+            font-size: 10px;
+        }
+
+        .botao-modo {
+            font-size: 11px;
+            padding: 8px 11px;
+        }
+
+        .opcoes-hidricas-titulo {
+            font-size: 14px;
+        }
+
+        .opcoes-hidricas-subtitulo {
+            font-size: 11px;
+        }
+
+        .recurso-candidato-nome {
+            font-size: 13px;
+        }
+
+        .recurso-candidato-meta {
+            font-size: 10px;
+        }
+
+        .botao-recurso {
+            font-size: 11px;
+            padding: 7px 10px;
+        }
+
+        .recurso-em-uso {
+            font-size: 11px;
+        }
+
+        .monitoramento-topo h4 {
+            font-size: 15px;
+        }
+
+        .monitoramento-topo p {
+            font-size: 12px;
+        }
+
+        .status-api {
+            font-size: 11px;
+            padding: 7px 10px;
+        }
+
+        .estacao-nome {
+            font-size: 18px;
+        }
+
+        .estacao-codigo {
+            font-size: 12px;
+        }
+
+        .estacao-local {
+            font-size: 12px;
+        }
+
+        .tag-estacao {
+            font-size: 10px;
+            padding: 5px 8px;
+        }
+
+        .vazao-item small {
+            font-size: 10px;
+        }
+
+        .vazao-item strong {
+            font-size: 19px;
+        }
+
+        .vazao-item strong span {
+            font-size: 10px;
+        }
+
+        .integracao-pendente,
+        .sem-vazao {
+            font-size: 12px;
+        }
+
+        .estacao-candidata-nome {
+            font-size: 13px;
+        }
+
+        .estacao-candidata-meta {
+            font-size: 10px;
+        }
+
+        .botao-estacao,
+        .estacao-em-uso {
+            font-size: 11px;
+        }
+
+        .comparacao-vazao {
+            font-size: 11px;
+        }
+
+        .detalhes summary {
+            font-size: 13px;
+        }
+
+        .detalhe small {
+            font-size: 11px;
+        }
+
+        .detalhe strong {
+            font-size: 13px;
+        }
+
+        .aviso {
+            font-size: 11px;
+        }
+
+        .icone-planta {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+        }
+
+        .icone-agua {
+            width: 44px;
+            height: 44px;
+            font-size: 24px;
+        }
+
+        .icone-estacao {
+            width: 34px;
+            height: 34px;
+            font-size: 14px;
+        }
+
+        .tooltip-agua,
+        .tooltip-estacao {
+            font-size: 12px;
+        }
+
+        .mapa-legenda {
+            font-size: 11px;
+            padding: 9px 11px;
+        }
+
+
+        /* =====================================================
+           CABEÇALHO DO CARD DE ANÁLISE
+        ===================================================== */
+
+        .painel-cabecalho h2 {
+            margin: 0;
+            color: #20332b;
+            font-size: 20px;
+            line-height: 1.2;
+        }
+
+        .painel-cabecalho p {
+            margin: 6px 0 0;
+            color: #708078;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .painel-divisor {
+            height: 1px;
+            margin: 16px 0 18px;
+            background: #e2eae6;
+        }
+
+        /* =====================================================
+           BOTÃO DE AJUDA "?"
+        ===================================================== */
+
+        .resultado-card,
+        .indicador-visual {
+            position: relative;
+        }
+
+        .ajuda-card {
+            position: absolute;
+            top: 11px;
+            right: 11px;
+            z-index: 5;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: 1px solid #c9d6d0;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #50625a;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            line-height: 1;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease,
+                color 0.15s ease,
+                transform 0.15s ease;
+        }
+
+        .ajuda-card:hover,
+        .ajuda-card:focus-visible {
+            background: #eaf5f1;
+            border-color: #77b29f;
+            color: #08795b;
+            transform: translateY(-1px);
+            outline: none;
+        }
+
+        .ajuda-indicador {
+            top: 10px;
+            right: 10px;
+            width: 26px;
+            height: 26px;
+            font-size: 14px;
+        }
+
+        .recomendacao-energia {
+            display: grid;
+            grid-template-columns: 38px 1fr;
+            gap: 10px;
+            align-items: start;
+            margin-bottom: 14px;
+            padding: 12px 13px;
+            border: 1px solid #cfe3da;
+            border-radius: 10px;
+            background: #f5fbf8;
+        }
+
+        .recomendacao-energia-icone {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #dff1e9;
+            font-size: 20px;
+        }
+
+        .recomendacao-energia strong {
+            display: block;
+            color: #164b39;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .recomendacao-energia p {
+            margin: 0;
+            color: #5d7067;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .recomendacao-energia.eolica {
+            border-color: #cbdfe9;
+            background: #f4f9fc;
+        }
+
+        .recomendacao-energia.eolica .recomendacao-energia-icone {
+            background: #e1eff6;
+        }
+
+        .recomendacao-energia.hibrida {
+            border-color: #d6dfc7;
+            background: #f8fbf2;
+        }
+
+        .recomendacao-energia.atencao {
+            border-color: #ead7b1;
+            background: #fffaf0;
+        }
+
+        /* =====================================================
+           MODAL DE EXPLICAÇÃO
+        ===================================================== */
+
+        .modal-ajuda {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(16, 29, 23, 0.50);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-ajuda.aberto {
+            display: flex;
+        }
+
+        .modal-ajuda-caixa {
+            width: min(560px, 100%);
+            max-height: 88vh;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #d9e3de;
+            border-radius: 16px;
+            box-shadow: 0 20px 55px rgba(0, 0, 0, 0.24);
+        }
+
+        .modal-ajuda-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            padding: 19px 20px 16px;
+            border-bottom: 1px solid #e5ebe8;
+        }
+
+        .modal-ajuda-topo h3 {
+            margin: 0;
+            color: #173e31;
+            font-size: 20px;
+            line-height: 1.25;
+        }
+
+        .modal-ajuda-fechar {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: #eff3f1;
+            color: #52635b;
+            font-size: 21px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .modal-ajuda-fechar:hover {
+            background: #e1ebe7;
+            color: #0b4d3b;
+        }
+
+        .modal-ajuda-corpo {
+            padding: 19px 20px 21px;
+        }
+
+        .ajuda-bloco + .ajuda-bloco {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid #edf1ef;
+        }
+
+        .ajuda-bloco h4 {
+            margin: 0 0 7px;
+            color: #31473d;
+            font-size: 14px;
+        }
+
+        .ajuda-bloco p {
+            margin: 0;
+            color: #65746d;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .ajuda-formula {
+            margin-top: 10px;
+            padding: 11px 12px;
+            border: 1px solid #dce9e3;
+            border-radius: 9px;
+            background: #f3f8f6;
+            color: #25483a;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .ajuda-observacao {
+            margin-top: 14px;
+            padding: 11px 12px;
+            border-left: 4px solid #d3a13b;
+            border-radius: 8px;
+            background: #fff9ec;
+            color: #66531e;
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        body.modal-aberto {
+            overflow: hidden;
+        }
+
+
+        /* =====================================================
+           RASTREABILIDADE DOS CÁLCULOS NOS POPUPS
+        ===================================================== */
+
+        .ajuda-dados {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .ajuda-dado {
+            padding: 9px 10px;
+            border: 1px solid #e0e8e4;
+            border-radius: 8px;
+            background: #fafcfb;
+        }
+
+        .ajuda-dado small {
+            display: block;
+            margin-bottom: 3px;
+            color: #809088;
+            font-size: 10px;
+        }
+
+        .ajuda-dado strong {
+            display: block;
+            color: #29433a;
+            font-size: 12px;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .ajuda-passos {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .ajuda-passo {
+            display: grid;
+            grid-template-columns: 26px 1fr;
+            gap: 9px;
+            align-items: start;
+        }
+
+        .ajuda-passo-numero {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e7f2ed;
+            color: #08795b;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .ajuda-passo-texto {
+            padding-top: 3px;
+            color: #5e7067;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .ajuda-resultado-calculo {
+            margin-top: 11px;
+            padding: 11px 12px;
+            border-radius: 9px;
+            background: #eaf6f1;
+            border: 1px solid #cfe6dc;
+            color: #164c3a;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.5;
+        }
+
+        .ajuda-classificacao {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #f6f8f7;
+            border: 1px solid #e1e7e4;
+            color: #56665e;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .ajuda-fonte {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 7px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: #eef4f1;
+            color: #486158;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        @media (max-width: 600px) {
+            .ajuda-dados {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .modal-ajuda {
+                align-items: flex-end;
+                padding: 10px;
+            }
+
+            .modal-ajuda-caixa {
+                max-height: 90vh;
+                border-radius: 16px 16px 10px 10px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .resultado-valor {
+                font-size: 38px;
+            }
+
+            .resultado-valor-distancia {
+                font-size: 34px;
+            }
+
+            .indicador-icone {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .indicadores-visuais {
+                grid-template-columns: 1fr;
+            }
+
+            .interpretacao {
+                grid-template-columns: 1fr;
+            }
+
+            .leitura-rapida-topo {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .lista-candidatos {
+                grid-template-columns: 1fr;
+            }
+
+            .opcoes-hidricas-topo {
+                flex-direction: column;
+            }
+
+            .trecho-mais-proximo {
+                text-align: left;
+            }
+
+            .grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            #mapa {
+                height: 450px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .pagina {
+                padding: 15px;
+            }
+
+            .coordenadas,
+            .parametros {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .resultado-valor {
+                font-size: 34px;
+            }
+
+            .resultado-valor-distancia {
+                font-size: 30px;
+            }
+
+            #mapa {
+                height: 400px;
+            }
+        }
+
+
+        @media (max-width: 760px) {
+            .estacao-destaque {
+                grid-template-columns: 1fr;
+            }
+
+            .estacao-candidata {
+                grid-template-columns: 34px 1fr;
+            }
+
+            .estacao-candidata .botao-estacao,
+            .estacao-candidata .estacao-em-uso {
+                grid-column: 2;
+                justify-self: start;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<header class="topo">
+    <div class="topo-conteudo">
+
+        <div class="marca">
+
+            <div class="marca-icone">
+                H₂
+            </div>
+
+            <div>
+                <h1>
+                    H2V-Siting Brasil
+                </h1>
+
+                <p>
+                    Avaliação preliminar para hidrogênio verde
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</header>
+
+<main class="pagina">
+{% if ponto_selecionado %}
+        {{ ponto_selecionado|json_script:"ponto-selecionado-data" }}
+    {% endif %}
+
+    {% if dados_hidricos and dados_hidricos.referencia %}
+
+        {{ dados_hidricos.referencia.geometria|json_script:"hidrografia-data" }}
+        {{ dados_hidricos.candidatos|json_script:"hidrografia-candidatos-data" }}
+
+        <script
+            id="hidrografia-ponto-data"
+            type="application/json"
+        >
+            {
+                "id": "{{ dados_hidricos.referencia.id|escapejs }}",
+                "latitude": {{ dados_hidricos.referencia.latitude_proxima|unlocalize }},
+                "longitude": {{ dados_hidricos.referencia.longitude_proxima|unlocalize }},
+                "nome": "{{ dados_hidricos.referencia.nome|escapejs }}",
+                "distancia_km": {{ dados_hidricos.referencia.distancia_km|unlocalize }}
+            }
+        </script>
+
+    {% endif %}
+
+    {% if dados_estacoes and dados_estacoes.candidatos %}
+        {{ dados_estacoes.candidatos|json_script:"estacoes-fluviometricas-data" }}
+    {% endif %}
+
+    {% if erro %}
+        <div class="erro">
+            {{ erro }}
+        </div>
+    {% endif %}
+
+    {% if erro_nasa %}
+        <div class="erro">
+            <strong>
+                NASA POWER:
+            </strong>
+            {{ erro_nasa }}
+        </div>
+    {% endif %}
+
+    {% if erro_eolica %}
+        <div class="erro">
+            <strong>Eólica:</strong>
+            {{ erro_eolica }}
+        </div>
+    {% endif %}
+
+    {% if erro_ana %}
+        <div class="erro">
+            <strong>
+                ANA/SNIRH:
+            </strong>
+            {{ erro_ana }}
+        </div>
+    {% endif %}
+
+    {% if erro_estacoes %}
+        <div class="erro">
+            <strong>Estações ANA/SNIRH:</strong>
+            {{ erro_estacoes }}
+        </div>
+    {% endif %}
+
+    {% if erro_hidroweb %}
+        <div class="erro">
+            <strong>HidroWebService:</strong>
+            {{ erro_hidroweb }}
+        </div>
+    {% endif %}
+
+    <div class="grid">
+
+        <section class="card">
+
+            <div class="card-titulo">
+
+                <h3>
+                    Mapa
+                </h3>
+
+                <p>
+                    Clique para escolher o local.
+                </p>
+
+            </div>
+
+            <div class="mapa-aviso">
+                <strong>Linha azul:</strong>
+                eixo de drenagem de referência da ANA,
+                não margem ou limite físico do rio.
+                Linhas administrativas/protegidas pertencem ao mapa-base.
+            </div>
+
+            <div id="mapa"></div>
+
+        </section>
+
+        <aside class="card">
+
+            <div class="painel">
+
+                <div class="painel-cabecalho">
+
+                    <h2>
+                        Nova análise
+                    </h2>
+
+                    <p>
+                        Escolha o local e configure a planta.
+                    </p>
+
+                </div>
+
+                <div class="painel-divisor"></div>
+
+                <div class="secao">
+
+                    <div class="secao-titulo">
+                        Local
+                    </div>
+
+                    <div class="coordenadas">
+
+                        <div class="campo">
+
+                            <label for="latitude">
+                                Latitude
+                            </label>
+
+                            <input
+                                type="number"
+                                id="latitude"
+                                step="0.000001"
+                                min="-90"
+                                max="90"
+                                placeholder="-2.905100"
+                                value="{% if ponto_selecionado %}{{ ponto_selecionado.latitude|unlocalize }}{% endif %}"
+                            >
+
+                        </div>
+
+                        <div class="campo">
+
+                            <label for="longitude">
+                                Longitude
+                            </label>
+
+                            <input
+                                type="number"
+                                id="longitude"
+                                step="0.000001"
+                                min="-180"
+                                max="180"
+                                placeholder="-41.776900"
+                                value="{% if ponto_selecionado %}{{ ponto_selecionado.longitude|unlocalize }}{% endif %}"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="secao">
+
+                    <div class="secao-titulo">
+                        Planta
+                    </div>
+
+                    <div class="parametros">
+
+                        <div class="campo campo-unidade">
+
+                            <label for="potencia_solar_mwp">
+                                Solar
+                            </label>
+
+                            <input
+                                type="number"
+                                id="potencia_solar_mwp"
+                                step="0.1"
+                                min="0.1"
+                                value="{{ parametros.potencia_solar_mwp|unlocalize }}"
+                            >
+
+                            <span class="unidade">
+                                MWp
+                            </span>
+
+                        </div>
+
+                        <div class="campo campo-unidade">
+
+                            <label for="performance_ratio">
+                                PR
+                            </label>
+
+                            <input
+                                type="number"
+                                id="performance_ratio"
+                                step="0.1"
+                                min="1"
+                                max="100"
+                                value="{{ parametros.performance_ratio|unlocalize }}"
+                            >
+
+                            <span class="unidade">
+                                %
+                            </span>
+
+                        </div>
+
+                        <div class="campo campo-unidade">
+
+                            <label for="potencia_eletrolisador_mw">
+                                Eletrólisador
+                            </label>
+
+                            <input
+                                type="number"
+                                id="potencia_eletrolisador_mw"
+                                step="0.1"
+                                min="0.1"
+                                value="{{ parametros.potencia_eletrolisador_mw|unlocalize }}"
+                            >
+
+                            <span class="unidade">
+                                MW
+                            </span>
+
+                        </div>
+
+                        <div class="campo campo-unidade">
+
+                            <label for="consumo_especifico">
+                                Consumo H₂
+                            </label>
+
+                            <input
+                                type="number"
+                                id="consumo_especifico"
+                                step="0.1"
+                                min="1"
+                                value="{{ parametros.consumo_especifico|unlocalize }}"
+                            >
+
+                            <span class="unidade">
+                                kWh/kg
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="botao"
+                    id="botao-analisar"
+                    disabled
+                >
+                    Analisar
+                </button>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+    {% if dados_solares and resultado_simulacao %}
+
+        <section class="resultados">
+
+            <div class="resultados-titulo">
+
+                <div>
+                    <h3>
+                        Resultado da análise
+                    </h3>
+
+                    <span class="fonte">
+                        NASA POWER (solar + vento) + ANA/SNIRH
+                    </span>
+                </div>
+
+                <div class="controle-modo">
+                    <button
+                        type="button"
+                        class="botao-modo ativo"
+                        id="modo-simples"
+                    >
+                        Leitura simples
+                    </button>
+
+                    <button
+                        type="button"
+                        class="botao-modo"
+                        id="modo-tecnico"
+                    >
+                        Dados técnicos
+                    </button>
+                </div>
+
+            </div>
+
+            <section class="leitura-rapida">
+
+                <div class="leitura-rapida-topo">
+
+                    <div>
+                        <h4>Leitura rápida</h4>
+                        <p>
+                            Uma tradução dos números para facilitar a interpretação.
+                        </p>
+                    </div>
+
+                    <div class="faixa-legenda">
+                        <span><i class="bolinha alto"></i>Favorável</span>
+                        <span><i class="bolinha medio"></i>Intermediário</span>
+                        <span><i class="bolinha baixo"></i>Atenção</span>
+                    </div>
+
+                </div>
+
+                <div class="indicadores-visuais">
+
+                    {% if dados_solares.irradiacao_media >= 5.5 %}
+
+                        <div class="indicador-visual alto">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="solar_indicador"
+                                aria-label="Explicação sobre Recurso solar"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">☀️</div>
+                            <div class="indicador-titulo">Recurso solar</div>
+                            <div class="indicador-faixa">Alto</div>
+                            <div class="indicador-numero">
+                                {{ dados_solares.irradiacao_media }} kWh/m²/dia
+                            </div>
+                            <div class="indicador-explicacao">
+                                O local apresenta recurso solar forte nesta
+                                leitura preliminar.
+                            </div>
+                        </div>
+
+                    {% elif dados_solares.irradiacao_media >= 4.5 %}
+
+                        <div class="indicador-visual medio">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="solar_indicador"
+                                aria-label="Explicação sobre Recurso solar"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">☀️</div>
+                            <div class="indicador-titulo">Recurso solar</div>
+                            <div class="indicador-faixa">Médio</div>
+                            <div class="indicador-numero">
+                                {{ dados_solares.irradiacao_media }} kWh/m²/dia
+                            </div>
+                            <div class="indicador-explicacao">
+                                O solar é interessante, mas deve ser comparado
+                                com outras fontes locais.
+                            </div>
+                        </div>
+
+                    {% else %}
+
+                        <div class="indicador-visual baixo">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="solar_indicador"
+                                aria-label="Explicação sobre Recurso solar"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">☀️</div>
+                            <div class="indicador-titulo">Recurso solar</div>
+                            <div class="indicador-faixa">Baixo</div>
+                            <div class="indicador-numero">
+                                {{ dados_solares.irradiacao_media }} kWh/m²/dia
+                            </div>
+                            <div class="indicador-explicacao">
+                                O recurso solar merece cautela e comparação com
+                                outras alternativas.
+                            </div>
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if dados_eolicos %}
+
+                        <div class="indicador-visual {{ dados_eolicos.classificacao.classe }}">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="eolica_indicador"
+                                aria-label="Explicação sobre Recurso eólico"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">🌬️</div>
+                            <div class="indicador-titulo">Recurso eólico</div>
+                            <div class="indicador-faixa">
+                                {{ dados_eolicos.classificacao.nivel }}
+                            </div>
+                            <div class="indicador-numero">
+                                {{ dados_eolicos.velocidade_media_100m }} m/s · 100 m
+                            </div>
+                            <div class="indicador-explicacao">
+                                {{ dados_eolicos.classificacao.mensagem }}
+                            </div>
+                        </div>
+
+                    {% else %}
+
+                        <div class="indicador-visual baixo">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="eolica_indicador"
+                                aria-label="Explicação sobre Recurso eólico"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">🌬️</div>
+                            <div class="indicador-titulo">Recurso eólico</div>
+                            <div class="indicador-faixa">Sem dado</div>
+                            <div class="indicador-numero">—</div>
+                            <div class="indicador-explicacao">
+                                A NASA POWER não retornou vento suficiente para esta estimativa.
+                            </div>
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if resultado_simulacao.aproveitamento_eletrolisador >= 70 %}
+
+                        <div class="indicador-visual alto">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="eletrolise_indicador"
+                                aria-label="Explicação sobre Uso do eletrólisador"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">⚡</div>
+                            <div class="indicador-titulo">Uso do eletrólisador</div>
+                            <div class="indicador-faixa">Alto</div>
+                            <div class="indicador-numero">
+                                {{ resultado_simulacao.aproveitamento_eletrolisador }}%
+                            </div>
+                            <div class="indicador-explicacao">
+                                A configuração aproveita bem a capacidade
+                                anual do eletrólisador.
+                            </div>
+                        </div>
+
+                    {% elif resultado_simulacao.aproveitamento_eletrolisador >= 40 %}
+
+                        <div class="indicador-visual medio">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="eletrolise_indicador"
+                                aria-label="Explicação sobre Uso do eletrólisador"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">⚡</div>
+                            <div class="indicador-titulo">Uso do eletrólisador</div>
+                            <div class="indicador-faixa">Médio</div>
+                            <div class="indicador-numero">
+                                {{ resultado_simulacao.aproveitamento_eletrolisador }}%
+                            </div>
+                            <div class="indicador-explicacao">
+                                Existe espaço para melhorar o equilíbrio entre
+                                geração e tamanho do eletrólisador.
+                            </div>
+                        </div>
+
+                    {% else %}
+
+                        <div class="indicador-visual baixo">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="eletrolise_indicador"
+                                aria-label="Explicação sobre Uso do eletrólisador"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">⚡</div>
+                            <div class="indicador-titulo">Uso do eletrólisador</div>
+                            <div class="indicador-faixa">Baixo</div>
+                            <div class="indicador-numero">
+                                {{ resultado_simulacao.aproveitamento_eletrolisador }}%
+                            </div>
+                            <div class="indicador-explicacao">
+                                O eletrólisador está superdimensionado para a
+                                energia disponível neste cenário.
+                            </div>
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if dados_hidricos and dados_hidricos.referencia %}
+
+                        {% if dados_hidricos.referencia.distancia_km <= 5 %}
+
+                            <div class="indicador-visual alto">
+                                <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="agua_indicador"
+                                aria-label="Explicação sobre Proximidade da água"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">💧</div>
+                                <div class="indicador-titulo">Proximidade da água</div>
+                                <div class="indicador-faixa">Alta</div>
+                                <div class="indicador-numero">
+                                    {{ dados_hidricos.referencia.distancia_km }} km
+                                </div>
+                                <div class="indicador-explicacao">
+                                    O recurso hídrico de referência está
+                                    relativamente próximo do ponto analisado.
+                                </div>
+                            </div>
+
+                        {% elif dados_hidricos.referencia.distancia_km <= 20 %}
+
+                            <div class="indicador-visual medio">
+                                <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="agua_indicador"
+                                aria-label="Explicação sobre Proximidade da água"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">💧</div>
+                                <div class="indicador-titulo">Proximidade da água</div>
+                                <div class="indicador-faixa">Média</div>
+                                <div class="indicador-numero">
+                                    {{ dados_hidricos.referencia.distancia_km }} km
+                                </div>
+                                <div class="indicador-explicacao">
+                                    A captação exigiria avaliar infraestrutura
+                                    e custo de transporte da água.
+                                </div>
+                            </div>
+
+                        {% else %}
+
+                            <div class="indicador-visual baixo">
+                                <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="agua_indicador"
+                                aria-label="Explicação sobre Proximidade da água"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">💧</div>
+                                <div class="indicador-titulo">Proximidade da água</div>
+                                <div class="indicador-faixa">Baixa</div>
+                                <div class="indicador-numero">
+                                    {{ dados_hidricos.referencia.distancia_km }} km
+                                </div>
+                                <div class="indicador-explicacao">
+                                    A distância pode aumentar a complexidade
+                                    e o custo da infraestrutura hídrica.
+                                </div>
+                            </div>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <div class="indicador-visual baixo">
+                            <button
+                                type="button"
+                                class="ajuda-card ajuda-indicador"
+                                data-ajuda="agua_indicador"
+                                aria-label="Explicação sobre Proximidade da água"
+                                title="O que significa este indicador?"
+                            >
+                                ?
+                            </button>
+
+                            <div class="indicador-icone">💧</div>
+                            <div class="indicador-titulo">Proximidade da água</div>
+                            <div class="indicador-faixa">Sem dado</div>
+                            <div class="indicador-numero">—</div>
+                            <div class="indicador-explicacao">
+                                Não há recurso hídrico de referência nesta análise.
+                            </div>
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="interpretacao">
+
+                    <div class="interpretacao-card destaque">
+
+                        <div class="interpretacao-titulo">
+                            O que este cenário sugere?
+                        </div>
+
+                        {% if recomendacao_energetica %}
+                            <div class="recomendacao-energia {{ recomendacao_energetica.classe }}">
+                                <div class="recomendacao-energia-icone">⚡</div>
+                                <div>
+                                    <strong>{{ recomendacao_energetica.titulo }}</strong>
+                                    <p>{{ recomendacao_energetica.texto }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="interpretacao-lista">
+
+                            <div class="interpretacao-item">
+                                <div class="interpretacao-item-icone">☀️</div>
+                                <div>
+                                    <strong>Energia solar</strong>
+
+                                    {% if dados_solares.irradiacao_media >= 5.5 %}
+                                        <p>
+                                            O solar aparece como uma opção forte
+                                            para aprofundar neste local.
+                                        </p>
+                                    {% elif dados_solares.irradiacao_media >= 4.5 %}
+                                        <p>
+                                            O solar merece análise, mas vale comparar
+                                            com o potencial eólico local.
+                                        </p>
+                                    {% else %}
+                                        <p>
+                                            Não é prudente priorizar solar sem comparar
+                                            outras fontes renováveis.
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if dados_eolicos %}
+                                <div class="interpretacao-item">
+                                    <div class="interpretacao-item-icone">🌬️</div>
+                                    <div>
+                                        <strong>Energia eólica</strong>
+                                        <p>
+                                            Vento médio estimado de
+                                            {{ dados_eolicos.velocidade_media_100m }} m/s a 100 m,
+                                            com fator de capacidade de referência de
+                                            {{ dados_eolicos.fator_capacidade_referencia }}%.
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <div class="interpretacao-item">
+                                <div class="interpretacao-item-icone">H₂</div>
+                                <div>
+                                    <strong>Configuração da planta</strong>
+
+                                    {% if resultado_simulacao.aproveitamento_eletrolisador >= 70 %}
+                                        <p>
+                                            A relação entre geração e eletrólise está
+                                            bem aproveitada neste cenário preliminar.
+                                        </p>
+                                    {% elif resultado_simulacao.aproveitamento_eletrolisador >= 40 %}
+                                        <p>
+                                            Há margem para testar outros tamanhos de
+                                            geração e de eletrólisador.
+                                        </p>
+                                    {% else %}
+                                        <p>
+                                            Vale reduzir o eletrólisador ou aumentar
+                                            a energia renovável disponível.
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="interpretacao-item">
+                                <div class="interpretacao-item-icone">💧</div>
+                                <div>
+                                    <strong>Água</strong>
+
+                                    {% if dados_hidricos and dados_hidricos.referencia %}
+                                        <p>
+                                            A água de referência está a
+                                            {{ dados_hidricos.referencia.distancia_km }} km.
+                                            A próxima confirmação será a vazão da ANA.
+                                        </p>
+                                    {% else %}
+                                        <p>
+                                            Ainda não há referência hídrica suficiente
+                                            para interpretar este ponto.
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="interpretacao-card">
+
+                        <div class="interpretacao-titulo">
+                            Fontes renováveis
+                        </div>
+
+                        <div class="fontes-grid">
+
+                            <div class="fonte-status">
+                                <div class="fonte-status-icone">☀️</div>
+
+                                <div>
+                                    <strong>Solar</strong>
+                                    <small>
+                                        Já calculado com dados da NASA POWER.
+                                    </small>
+                                </div>
+
+                                <span class="status-pill avaliado">
+                                    Avaliado
+                                </span>
+                            </div>
+
+                            <div class="fonte-status">
+                                <div class="fonte-status-icone">🌬️</div>
+
+                                <div>
+                                    <strong>Eólica</strong>
+                                    <small>
+                                        NASA POWER WS10M/WS50M · estimativa a 100 m.
+                                    </small>
+                                </div>
+
+                                <span class="status-pill avaliado">
+                                    Avaliado
+                                </span>
+                            </div>
+
+                            <div class="fonte-status">
+                                <div class="fonte-status-icone">🌊</div>
+
+                                <div>
+                                    <strong>Hidrelétrica</strong>
+                                    <small>
+                                        Geração hidrelétrica ainda não é avaliada;
+                                        água próxima é recurso para o processo de H₂.
+                                    </small>
+                                </div>
+
+                                <span class="status-pill pendente">
+                                    Pendente
+                                </span>
+                            </div>
+
+                        </div>
+
+                        <div class="observacao-metodo">
+                            As faixas Baixo/Médio/Alto são indicadores visuais
+                            preliminares do protótipo e deverão ser calibradas
+                            e justificadas na metodologia do TCC. Elas não
+                            representam decisão de investimento ou licenciamento.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <div class="cards-resultado">
+
+                <div class="resultado-card">
+
+                    <button
+                        type="button"
+                        class="ajuda-card"
+                        data-ajuda="solar"
+                        aria-label="Explicação sobre energia solar"
+                        title="O que significa este dado?"
+                    >
+                        ?
+                    </button>
+
+                    <div class="resultado-label">
+                        Solar
+                    </div>
+
+                    <div class="resultado-valor">
+                        {{ resultado_simulacao.energia_solar_diaria_mwh }}
+                        <span>
+                            MWh/dia
+                        </span>
+                    </div>
+
+                    <div class="resultado-secundario">
+                        {{ dados_solares.irradiacao_media }}
+                        kWh/m²/dia
+                    </div>
+
+                </div>
+
+                {% if dados_eolicos %}
+                    <div class="resultado-card">
+
+                        <button
+                            type="button"
+                            class="ajuda-card"
+                            data-ajuda="eolica"
+                            aria-label="Explicação sobre energia eólica"
+                            title="O que significa este dado?"
+                        >
+                            ?
+                        </button>
+
+                        <div class="resultado-label">
+                            Eólica
+                        </div>
+
+                        <div class="resultado-valor">
+                            {{ dados_eolicos.velocidade_media_100m }}
+                            <span>m/s · 100 m</span>
+                        </div>
+
+                        <div class="resultado-secundario">
+                            1 MW ref.:
+                            {{ dados_eolicos.geracao_especifica_mwh_mw_ano }} MWh/ano
+                            · FC {{ dados_eolicos.fator_capacidade_referencia }}%
+                        </div>
+
+                    </div>
+                {% endif %}
+
+                <div class="resultado-card">
+
+                    <button
+                        type="button"
+                        class="ajuda-card"
+                        data-ajuda="eletrolise"
+                        aria-label="Explicação sobre eletrólise"
+                        title="O que significa este dado?"
+                    >
+                        ?
+                    </button>
+
+                    <div class="resultado-label">
+                        Eletrólise
+                    </div>
+
+                    <div class="resultado-valor">
+                        {{ resultado_simulacao.energia_util_diaria_mwh }}
+                        <span>
+                            MWh/dia
+                        </span>
+                    </div>
+
+                    <div class="resultado-secundario">
+                        Uso:
+                        {{ resultado_simulacao.aproveitamento_eletrolisador }}%
+                    </div>
+
+                </div>
+
+                <div class="resultado-card">
+
+                    <button
+                        type="button"
+                        class="ajuda-card"
+                        data-ajuda="hidrogenio"
+                        aria-label="Explicação sobre produção de hidrogênio"
+                        title="O que significa este dado?"
+                    >
+                        ?
+                    </button>
+
+                    <div class="resultado-label">
+                        Hidrogênio
+                    </div>
+
+                    <div class="resultado-valor">
+                        {{ resultado_simulacao.h2_dia_kg }}
+                        <span>
+                            kg/dia
+                        </span>
+                    </div>
+
+                    <div class="resultado-secundario">
+                        {{ resultado_simulacao.h2_ano_t }}
+                        t/ano
+                    </div>
+
+                </div>
+
+                <div class="resultado-card">
+
+                    <button
+                        type="button"
+                        class="ajuda-card"
+                        data-ajuda="agua"
+                        aria-label="Explicação sobre demanda hídrica"
+                        title="O que significa este dado?"
+                    >
+                        ?
+                    </button>
+
+                    <div class="resultado-label">
+                        Demanda hídrica
+                    </div>
+
+                    <div class="resultado-valor">
+                        {{ resultado_simulacao.agua_dia_m3 }}
+                        <span>
+                            m³/dia
+                        </span>
+                    </div>
+
+                    <div class="resultado-secundario">
+                        Mínimo teórico
+                    </div>
+
+                </div>
+
+                {% if dados_hidricos %}
+
+                    <div class="resultado-card recurso-card">
+
+                        <button
+                            type="button"
+                            class="ajuda-card"
+                            data-ajuda="recurso_hidrico"
+                            aria-label="Explicação sobre referência hídrica"
+                            title="O que significa este dado?"
+                        >
+                            ?
+                        </button>
+
+                        <div class="resultado-label">
+                            Referência hídrica
+                        </div>
+
+                        {% if dados_hidricos.referencia %}
+
+                            <div class="resultado-nome">
+                                {{ dados_hidricos.referencia.nome }}
+                            </div>
+
+                            <div class="resultado-valor-distancia">
+                                {{ dados_hidricos.referencia.distancia_km }}
+                                <span>
+                                    km
+                                </span>
+                            </div>
+
+                            <div class="resultado-apoio">
+                                recurso selecionado para a análise
+                            </div>
+
+                            <div class="resultado-badge">
+                                {{ dados_hidricos.referencia.dominio }}
+                            </div>
+
+                        {% else %}
+
+                            <div class="resultado-nome">
+                                Não localizado
+                            </div>
+
+                            <div class="resultado-apoio">
+                                Nenhum curso candidato foi encontrado.
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+            {% if dados_hidricos and dados_hidricos.candidatos %}
+
+                <section class="opcoes-hidricas somente-tecnico">
+
+                    <div class="opcoes-hidricas-topo">
+                        <div>
+                            <h4>Recursos hídricos candidatos</h4>
+                            <p>
+                                Cursos identificados recebem prioridade.
+                                Escolha qual será usado como referência hídrica.
+                            </p>
+                        </div>
+
+                        {% if dados_hidricos.trecho_mais_proximo %}
+                            <div class="trecho-mais-proximo">
+                                <span>Trecho mais próximo</span>
+                                <strong>
+                                    {{ dados_hidricos.trecho_mais_proximo.distancia_km }} km
+                                </strong>
+                                <small>
+                                    {{ dados_hidricos.trecho_mais_proximo.nome }}
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="lista-candidatos">
+
+                        {% for recurso in dados_hidricos.candidatos %}
+
+                            <article
+                                class="candidato-hidrico {% if recurso.selecionado %}selecionado{% endif %}"
+                            >
+                                <div class="candidato-indice">
+                                    {{ forloop.counter }}
+                                </div>
+
+                                <div class="candidato-conteudo">
+                                    <div class="candidato-nome">
+                                        {{ recurso.nome }}
+                                    </div>
+
+                                    <div class="candidato-meta">
+                                        <strong>{{ recurso.distancia_km }} km</strong>
+                                        <span>{{ recurso.dominio }}</span>
+                                        {% if recurso.identificado %}
+                                            <span class="tag-identificado">Identificado</span>
+                                        {% else %}
+                                            <span class="tag-anonimo">Sem nome</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if recurso.selecionado %}
+                                    <div class="candidato-status">
+                                        Em uso
+                                    </div>
+                                {% else %}
+                                    <button
+                                        type="button"
+                                        class="botao-recurso"
+                                        data-recurso="{{ recurso.id }}"
+                                    >
+                                        Usar
+                                    </button>
+                                {% endif %}
+                            </article>
+
+                        {% endfor %}
+
+                    </div>
+
+                </section>
+
+            {% endif %}
+
+
+            {% if dados_estacoes %}
+
+                <section class="monitoramento-vazao somente-tecnico">
+
+                    <div class="monitoramento-topo">
+
+                        <div>
+                            <h4>Monitoramento fluviométrico</h4>
+                            <p>
+                                Estações próximas ao recurso hídrico selecionado.
+                                A proximidade é preliminar e não garante equivalência
+                                hidrológica entre as seções.
+                            </p>
+                        </div>
+
+                        {% if hidroweb_config.configurado %}
+                            <span class="status-api ativa">
+                                HidroWeb conectado
+                            </span>
+                        {% else %}
+                            <span class="status-api pendente">
+                                Vazão pendente
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                    {% if dados_estacoes.referencia %}
+
+                        <div class="estacao-destaque">
+
+                            <div>
+
+                                <div class="estacao-nome">
+                                    {{ dados_estacoes.referencia.nome }}
+                                </div>
+
+                                <div class="estacao-codigo">
+                                    Código ANA:
+                                    {{ dados_estacoes.referencia.codigo }}
+                                    ·
+                                    {{ dados_estacoes.referencia.distancia_km }} km
+                                    do recurso de referência
+                                </div>
+
+                                <div class="estacao-local">
+                                    {{ dados_estacoes.referencia.rio }}
+                                    {% if dados_estacoes.referencia.municipio %}
+                                        · {{ dados_estacoes.referencia.municipio }}
+                                    {% endif %}
+                                    {% if dados_estacoes.referencia.uf %}
+                                        / {{ dados_estacoes.referencia.uf }}
+                                    {% endif %}
+                                </div>
+
+                                <div class="tags-estacao">
+
+                                    {% if dados_estacoes.referencia.mesmo_rio %}
+                                        <span class="tag-estacao destaque">
+                                            Mesmo rio
+                                        </span>
+                                    {% endif %}
+
+                                    {% if dados_estacoes.referencia.operando %}
+                                        <span class="tag-estacao">
+                                            Em operação
+                                        </span>
+                                    {% endif %}
+
+                                    {% if dados_estacoes.referencia.mede_vazao %}
+                                        <span class="tag-estacao">
+                                            Mede vazão
+                                        </span>
+                                    {% endif %}
+
+                                    {% if dados_estacoes.referencia.telemetrica %}
+                                        <span class="tag-estacao">
+                                            Telemétrica
+                                        </span>
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                            <div>
+
+                                {% if monitoramento_hidroweb and monitoramento_hidroweb.vazao and monitoramento_hidroweb.vazao.disponivel %}
+
+                                    <div class="vazao-resumo">
+
+                                        <div class="vazao-item">
+                                            <small>Vazão recente</small>
+                                            <strong>
+                                                {{ monitoramento_hidroweb.vazao.vazao_atual_m3s }}
+                                                <span>m³/s</span>
+                                            </strong>
+                                        </div>
+
+                                        <div class="vazao-item">
+                                            <small>Média 30 dias</small>
+                                            <strong>
+                                                {{ monitoramento_hidroweb.vazao.vazao_media_m3s }}
+                                                <span>m³/s</span>
+                                            </strong>
+                                        </div>
+
+                                        <div class="vazao-item">
+                                            <small>Mínima 30 dias</small>
+                                            <strong>
+                                                {{ monitoramento_hidroweb.vazao.vazao_minima_m3s }}
+                                                <span>m³/s</span>
+                                            </strong>
+                                        </div>
+
+                                        <div class="vazao-item">
+                                            <small>Máxima 30 dias</small>
+                                            <strong>
+                                                {{ monitoramento_hidroweb.vazao.vazao_maxima_m3s }}
+                                                <span>m³/s</span>
+                                            </strong>
+                                        </div>
+
+                                    </div>
+
+                                    {% if monitoramento_hidroweb.comparacao %}
+                                        <div class="comparacao-vazao">
+                                            Demanda teórica da planta:
+                                            <strong>
+                                                {{ monitoramento_hidroweb.comparacao.demanda_m3s }} m³/s
+                                            </strong>
+
+                                            {% if monitoramento_hidroweb.comparacao.demanda_sobre_media_percentual != None %}
+                                                · relação com a vazão média observada:
+                                                <strong>
+                                                    {{ monitoramento_hidroweb.comparacao.demanda_sobre_media_percentual }}%
+                                                </strong>
+                                            {% endif %}
+
+                                            <br>
+                                            Indicador físico preliminar — não representa
+                                            vazão outorgável ou autorização de captação.
+                                        </div>
+                                    {% endif %}
+
+                                {% elif hidroweb_config.configurado %}
+
+                                    <div class="sem-vazao">
+                                        A estação foi localizada, mas não houve
+                                        vazão telemétrica adotada válida nos últimos
+                                        30 dias para esta consulta.
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="integracao-pendente">
+                                        <strong>Estações já funcionando.</strong><br>
+                                        Para trazer vazão, copie <code>.env.example</code>
+                                        para <code>.env</code> e informe as credenciais
+                                        do HidroWebService da ANA.
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                        {% if dados_estacoes.candidatos %}
+
+                            <div class="estacoes-lista">
+
+                                {% for estacao in dados_estacoes.candidatos %}
+
+                                    <article
+                                        class="estacao-candidata {% if estacao.selecionada %}selecionada{% endif %}"
+                                    >
+
+                                        <div class="estacao-indice">
+                                            {{ forloop.counter }}
+                                        </div>
+
+                                        <div>
+                                            <div class="estacao-candidata-nome">
+                                                {{ estacao.nome }}
+                                            </div>
+
+                                            <div class="estacao-candidata-meta">
+                                                <span>{{ estacao.codigo }}</span>
+                                                <strong>{{ estacao.distancia_km }} km</strong>
+                                                <span>{{ estacao.rio }}</span>
+
+                                                {% if estacao.mesmo_rio %}
+                                                    <span>Mesmo rio</span>
+                                                {% endif %}
+
+                                                {% if estacao.mede_vazao %}
+                                                    <span>Mede vazão</span>
+                                                {% endif %}
+
+                                                {% if estacao.telemetrica %}
+                                                    <span>Telemétrica</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        {% if estacao.selecionada %}
+                                            <div class="estacao-em-uso">
+                                                Em uso
+                                            </div>
+                                        {% else %}
+                                            <button
+                                                type="button"
+                                                class="botao-estacao"
+                                                data-estacao="{{ estacao.codigo }}"
+                                            >
+                                                Usar
+                                            </button>
+                                        {% endif %}
+
+                                    </article>
+
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <div class="sem-vazao">
+                            Nenhuma estação fluviométrica foi localizada
+                            dentro do raio de busca de
+                            {{ dados_estacoes.raio_busca_km }} km.
+                        </div>
+
+                    {% endif %}
+
+                </section>
+
+            {% endif %}
+
+            <details class="detalhes somente-tecnico">
+
+                <summary>
+                    Ver detalhes
+                </summary>
+
+                <div class="detalhes-conteudo">
+
+                    <div class="detalhe">
+                        <small>Solar anual</small>
+                        <strong>
+                            {{ resultado_simulacao.energia_solar_anual_mwh }}
+                            MWh
+                        </strong>
+                    </div>
+
+                    {% if dados_eolicos %}
+                        <div class="detalhe">
+                            <small>Vento médio a 100 m</small>
+                            <strong>{{ dados_eolicos.velocidade_media_100m }} m/s</strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Densidade eólica teórica</small>
+                            <strong>{{ dados_eolicos.densidade_potencia_w_m2 }} W/m²</strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Fator de capacidade eólico ref.</small>
+                            <strong>{{ dados_eolicos.fator_capacidade_referencia }}%</strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Geração eólica específica ref.</small>
+                            <strong>{{ dados_eolicos.geracao_especifica_mwh_mw_ano }} MWh/MW.ano</strong>
+                        </div>
+                    {% endif %}
+
+                    <div class="detalhe">
+                        <small>H₂ anual</small>
+                        <strong>
+                            {{ resultado_simulacao.h2_ano_t }}
+                            t
+                        </strong>
+                    </div>
+
+                    <div class="detalhe">
+                        <small>Água anual</small>
+                        <strong>
+                            {{ resultado_simulacao.agua_ano_m3 }}
+                            m³
+                        </strong>
+                    </div>
+
+                    <div class="detalhe">
+                        <small>Limitação</small>
+                        <strong>
+                            {{ resultado_simulacao.gargalo }}
+                        </strong>
+                    </div>
+
+                    <div class="detalhe">
+                        <small>Solar mínimo</small>
+                        <strong>
+                            {{ dados_solares.irradiacao_minima }}
+                            kWh/m²/dia
+                        </strong>
+                    </div>
+
+                    <div class="detalhe">
+                        <small>Solar máximo</small>
+                        <strong>
+                            {{ dados_solares.irradiacao_maxima }}
+                            kWh/m²/dia
+                        </strong>
+                    </div>
+
+                    <div class="detalhe">
+                        <small>Excedente</small>
+                        <strong>
+                            {{ resultado_simulacao.excedente_diario_mwh }}
+                            MWh/dia
+                        </strong>
+                    </div>
+
+                    <div class="detalhe">
+                        <small>Consumo H₂</small>
+                        <strong>
+                            {{ resultado_simulacao.consumo_especifico }}
+                            kWh/kg
+                        </strong>
+                    </div>
+
+                    {% if dados_hidricos and dados_hidricos.referencia %}
+
+                        <div class="detalhe">
+                            <small>Curso d'água</small>
+                            <strong>
+                                {{ dados_hidricos.referencia.nome }}
+                            </strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Distância</small>
+                            <strong>
+                                {{ dados_hidricos.referencia.distancia_km }}
+                                km
+                            </strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Domínio</small>
+                            <strong>
+                                {{ dados_hidricos.referencia.dominio }}
+                            </strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Geometria</small>
+                            <strong>
+                                Eixo de drenagem
+                            </strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Código do curso</small>
+                            <strong>
+                                {{ dados_hidricos.referencia.codigo_curso|default:"—" }}
+                            </strong>
+                        </div>
+
+                        <div class="detalhe">
+                            <small>Código da bacia</small>
+                            <strong>
+                                {{ dados_hidricos.referencia.codigo_bacia|default:"—" }}
+                            </strong>
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </details>
+
+            <div class="aviso">
+                Avaliação preliminar. A linha hidrográfica representa
+                o eixo de drenagem da base ANA e não as margens físicas
+                do corpo d'água. A proximidade não implica disponibilidade
+                ou autorização para captação. A estimativa eólica usa médias
+                diárias e curva de turbina normalizada, adequada apenas à triagem.
+            </div>
+
+        </section>
+
+    {% endif %}
+
+</main>
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        if (typeof L === "undefined") {
+            console.error(
+                "Leaflet não foi carregado."
+            );
+            return;
+        }
+
+        const latitudeInput =
+            document.getElementById(
+                "latitude"
+            );
+
+        const longitudeInput =
+            document.getElementById(
+                "longitude"
+            );
+
+        const potenciaSolarInput =
+            document.getElementById(
+                "potencia_solar_mwp"
+            );
+
+        const performanceRatioInput =
+            document.getElementById(
+                "performance_ratio"
+            );
+
+        const potenciaEletrolisadorInput =
+            document.getElementById(
+                "potencia_eletrolisador_mw"
+            );
+
+        const consumoEspecificoInput =
+            document.getElementById(
+                "consumo_especifico"
+            );
+
+        const botaoAnalisar =
+            document.getElementById(
+                "botao-analisar"
+            );
+
+
+        /*
+         * POPUPS DE EXPLICAÇÃO
+         */
+
+        /*
+         * Valores REAIS da análise atual.
+         * Eles são usados para que o popup não mostre apenas a fórmula,
+         * mas também os dados de entrada e a substituição numérica.
+         */
+
+        const dadosCalculo = {
+
+            solar: {
+                fonte: "NASA POWER · ALLSKY_SFC_SW_DWN",
+                ano: "{{ dados_solares.ano|default:'—' }}",
+                dias: Number("{{ dados_solares.dias_analisados|default:0|unlocalize }}"),
+                irradiacaoMedia: Number("{{ dados_solares.irradiacao_media|default:0|unlocalize }}"),
+                irradiacaoAnual: Number("{{ dados_solares.irradiacao_anual|default:0|unlocalize }}"),
+                potenciaMwp: Number("{{ parametros.potencia_solar_mwp|default:0|unlocalize }}"),
+                pr: Number("{{ parametros.performance_ratio|default:0|unlocalize }}"),
+                energiaDiaMwh: Number("{{ resultado_simulacao.energia_solar_diaria_mwh|default:0|unlocalize }}"),
+                energiaAnoMwh: Number("{{ resultado_simulacao.energia_solar_anual_mwh|default:0|unlocalize }}")
+            },
+
+            planta: {
+                eletrolisadorMw: Number("{{ parametros.potencia_eletrolisador_mw|default:0|unlocalize }}"),
+                consumoEspecifico: Number("{{ parametros.consumo_especifico|default:0|unlocalize }}"),
+                energiaUtilDiaMwh: Number("{{ resultado_simulacao.energia_util_diaria_mwh|default:0|unlocalize }}"),
+                energiaUtilAnoMwh: Number("{{ resultado_simulacao.energia_util_anual_mwh|default:0|unlocalize }}"),
+                aproveitamento: Number("{{ resultado_simulacao.aproveitamento_eletrolisador|default:0|unlocalize }}"),
+                h2DiaKg: Number("{{ resultado_simulacao.h2_dia_kg|default:0|unlocalize }}"),
+                aguaDiaM3: Number("{{ resultado_simulacao.agua_dia_m3|default:0|unlocalize }}")
+            },
+
+            {% if dados_eolicos %}
+            eolica: {
+                disponivel: true,
+                fonte: "NASA POWER · WS10M + WS50M",
+                dias: Number("{{ dados_eolicos.dias_analisados|unlocalize }}"),
+                v10: Number("{{ dados_eolicos.velocidade_media_10m|unlocalize }}"),
+                v50: Number("{{ dados_eolicos.velocidade_media_50m|unlocalize }}"),
+                alfa: Number("{{ dados_eolicos.expoente_cisalhamento_medio|unlocalize }}"),
+                somaV100: Number("{{ dados_eolicos.soma_velocidade_100m|unlocalize }}"),
+                v100: Number("{{ dados_eolicos.velocidade_media_100m|unlocalize }}"),
+                densidade: Number("{{ dados_eolicos.densidade_potencia_w_m2|unlocalize }}"),
+                fatorCapacidade: Number("{{ dados_eolicos.fator_capacidade_referencia|unlocalize }}"),
+                geracao: Number("{{ dados_eolicos.geracao_especifica_mwh_mw_ano|unlocalize }}"),
+                nivel: "{{ dados_eolicos.classificacao.nivel|escapejs }}"
+            },
+            {% else %}
+            eolica: {
+                disponivel: false
+            },
+            {% endif %}
+
+            {% if dados_hidricos and dados_hidricos.referencia %}
+            aguaReferencia: {
+                disponivel: true,
+                fonte: "ANA/SNIRH · rede hidrográfica",
+                nome: "{{ dados_hidricos.referencia.nome|escapejs }}",
+                dominio: "{{ dados_hidricos.referencia.dominio|escapejs }}",
+                distancia: Number("{{ dados_hidricos.referencia.distancia_km|unlocalize }}"),
+                codigo: "{{ dados_hidricos.referencia.codigo_curso|default:'—'|escapejs }}"
+            }
+            {% else %}
+            aguaReferencia: {
+                disponivel: false
+            }
+            {% endif %}
+        };
+
+
+        function numeroPt(
+            valor,
+            casas = 2
+        ) {
+            const numero =
+                Number(valor);
+
+            if (!Number.isFinite(numero)) {
+                return "—";
+            }
+
+            return numero.toLocaleString(
+                "pt-BR",
+                {
+                    minimumFractionDigits: casas,
+                    maximumFractionDigits: casas
+                }
+            );
+        }
+
+
+        function dado(
+            rotulo,
+            valor
+        ) {
+            return {
+                rotulo: rotulo,
+                valor: valor
+            };
+        }
+
+
+        const conteudosAjuda = {
+
+            solar: {
+                titulo:
+                    "Energia solar estimada",
+
+                significado:
+                    "É a energia elétrica diária estimada para a usina "
+                    + "fotovoltaica configurada neste ponto.",
+
+                fonte:
+                    dadosCalculo.solar.fonte,
+
+                dados: function () {
+                    return [
+                        dado(
+                            "Irradiação média",
+                            numeroPt(
+                                dadosCalculo.solar.irradiacaoMedia,
+                                3
+                            )
+                            + " kWh/m²/dia"
+                        ),
+                        dado(
+                            "Potência solar",
+                            numeroPt(
+                                dadosCalculo.solar.potenciaMwp,
+                                2
+                            )
+                            + " MWp"
+                        ),
+                        dado(
+                            "Performance Ratio",
+                            numeroPt(
+                                dadosCalculo.solar.pr,
+                                1
+                            )
+                            + "%"
+                        ),
+                        dado(
+                            "Período NASA",
+                            dadosCalculo.solar.ano
+                            + " · "
+                            + dadosCalculo.solar.dias
+                            + " dias válidos"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    const prDecimal =
+                        dadosCalculo.solar.pr
+                        / 100;
+
+                    const calculado =
+                        dadosCalculo.solar.potenciaMwp
+                        * dadosCalculo.solar.irradiacaoMedia
+                        * prDecimal;
+
+                    return [
+                        "A NASA POWER fornece a irradiação solar diária "
+                        + "ALLSKY_SFC_SW_DWN para a coordenada escolhida.",
+
+                        "A média usada foi "
+                        + numeroPt(
+                            dadosCalculo.solar.irradiacaoMedia,
+                            3
+                        )
+                        + " kWh/m²/dia.",
+
+                        "O PR de "
+                        + numeroPt(
+                            dadosCalculo.solar.pr,
+                            1
+                        )
+                        + "% é convertido para "
+                        + numeroPt(
+                            prDecimal,
+                            3
+                        )
+                        + ".",
+
+                        numeroPt(
+                            dadosCalculo.solar.potenciaMwp,
+                            2
+                        )
+                        + " MWp × "
+                        + numeroPt(
+                            dadosCalculo.solar.irradiacaoMedia,
+                            3
+                        )
+                        + " × "
+                        + numeroPt(
+                            prDecimal,
+                            3
+                        )
+                        + " = "
+                        + numeroPt(
+                            calculado,
+                            2
+                        )
+                        + " MWh/dia."
+                    ];
+                },
+
+                resultado: function () {
+                    return (
+                        "Resultado apresentado: "
+                        + numeroPt(
+                            dadosCalculo.solar.energiaDiaMwh,
+                            2
+                        )
+                        + " MWh/dia."
+                    );
+                },
+
+                classificacao:
+                    "O card numérico não recebe Baixo/Médio/Alto. "
+                    + "A classificação solar é aplicada ao valor de irradiação "
+                    + "no indicador “Recurso solar”.",
+
+                observacao:
+                    "A estimativa é de pré-viabilidade. Não substitui "
+                    + "simulação fotovoltaica detalhada."
+            },
+
+
+            solar_indicador: {
+                titulo:
+                    "Nível do recurso solar",
+
+                significado:
+                    "Classifica a disponibilidade do recurso solar do local.",
+
+                fonte:
+                    dadosCalculo.solar.fonte,
+
+                dados: function () {
+                    return [
+                        dado(
+                            "Soma anual dos valores diários",
+                            numeroPt(
+                                dadosCalculo.solar.irradiacaoAnual,
+                                3
+                            )
+                            + " kWh/m²/ano"
+                        ),
+                        dado(
+                            "Dias válidos",
+                            String(
+                                dadosCalculo.solar.dias
+                            )
+                        ),
+                        dado(
+                            "Média diária resultante",
+                            numeroPt(
+                                dadosCalculo.solar.irradiacaoMedia,
+                                3
+                            )
+                            + " kWh/m²/dia"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    return [
+                        "Foram coletados "
+                        + dadosCalculo.solar.dias
+                        + " valores diários válidos da NASA POWER.",
+
+                        "Esses valores somaram "
+                        + numeroPt(
+                            dadosCalculo.solar.irradiacaoAnual,
+                            3
+                        )
+                        + " kWh/m² no período.",
+
+                        numeroPt(
+                            dadosCalculo.solar.irradiacaoAnual,
+                            3
+                        )
+                        + " ÷ "
+                        + dadosCalculo.solar.dias
+                        + " = "
+                        + numeroPt(
+                            dadosCalculo.solar.irradiacaoMedia,
+                            3
+                        )
+                        + " kWh/m²/dia."
+                    ];
+                },
+
+                resultado: function () {
+                    return (
+                        "Valor usado para classificar: "
+                        + numeroPt(
+                            dadosCalculo.solar.irradiacaoMedia,
+                            3
+                        )
+                        + " kWh/m²/dia."
+                    );
+                },
+
+                classificacao:
+                    "Baixo: < 4,5 · Médio: 4,5 a < 5,5 · "
+                    + "Alto: ≥ 5,5 kWh/m²/dia.",
+
+                observacao:
+                    "As faixas são preliminares do protótipo e devem ser "
+                    + "justificadas metodologicamente no TCC."
+            },
+
+
+            eletrolise: {
+                titulo:
+                    "Energia utilizada na eletrólise",
+
+                significado:
+                    "Mostra quanta energia renovável pode efetivamente ser "
+                    + "consumida pelo eletrólisador.",
+
+                fonte:
+                    "Cálculo interno · geração solar + potência do eletrólisador",
+
+                dados: function () {
+                    const capacidadeDia =
+                        dadosCalculo.planta.eletrolisadorMw
+                        * 24;
+
+                    return [
+                        dado(
+                            "Energia solar disponível",
+                            numeroPt(
+                                dadosCalculo.solar.energiaDiaMwh,
+                                2
+                            )
+                            + " MWh/dia"
+                        ),
+                        dado(
+                            "Potência do eletrólisador",
+                            numeroPt(
+                                dadosCalculo.planta.eletrolisadorMw,
+                                2
+                            )
+                            + " MW"
+                        ),
+                        dado(
+                            "Capacidade máxima em 24 h",
+                            numeroPt(
+                                capacidadeDia,
+                                2
+                            )
+                            + " MWh/dia"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    const capacidadeDia =
+                        dadosCalculo.planta.eletrolisadorMw
+                        * 24;
+
+                    return [
+                        numeroPt(
+                            dadosCalculo.planta.eletrolisadorMw,
+                            2
+                        )
+                        + " MW × 24 h = "
+                        + numeroPt(
+                            capacidadeDia,
+                            2
+                        )
+                        + " MWh/dia de capacidade máxima.",
+
+                        "Compara-se "
+                        + numeroPt(
+                            dadosCalculo.solar.energiaDiaMwh,
+                            2
+                        )
+                        + " MWh/dia disponíveis com "
+                        + numeroPt(
+                            capacidadeDia,
+                            2
+                        )
+                        + " MWh/dia de capacidade.",
+
+                        "O menor dos dois valores é usado na eletrólise."
+                    ];
+                },
+
+                resultado: function () {
+                    return (
+                        "Energia útil = "
+                        + numeroPt(
+                            dadosCalculo.planta.energiaUtilDiaMwh,
+                            2
+                        )
+                        + " MWh/dia."
+                    );
+                },
+
+                classificacao:
+                    "O nível Baixo/Médio/Alto aparece no indicador "
+                    + "“Uso do eletrólisador” e é calculado pelo "
+                    + "aproveitamento anual.",
+
+                observacao:
+                    "Nesta fase, a produção de H₂ usa somente a energia "
+                    + "solar configurada. A eólica ainda é avaliada "
+                    + "separadamente."
+            },
+
+
+            eletrolise_indicador: {
+                titulo:
+                    "Nível de aproveitamento do eletrólisador",
+
+                significado:
+                    "Mostra qual parcela da capacidade anual máxima do "
+                    + "eletrólisador está sendo utilizada.",
+
+                fonte:
+                    "Cálculo interno da simulação H₂V",
+
+                dados: function () {
+                    const capacidadeAno =
+                        dadosCalculo.planta.eletrolisadorMw
+                        * 8760;
+
+                    return [
+                        dado(
+                            "Energia útil anual",
+                            numeroPt(
+                                dadosCalculo.planta.energiaUtilAnoMwh,
+                                2
+                            )
+                            + " MWh/ano"
+                        ),
+                        dado(
+                            "Capacidade anual máxima",
+                            numeroPt(
+                                capacidadeAno,
+                                2
+                            )
+                            + " MWh/ano"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    const capacidadeAno =
+                        dadosCalculo.planta.eletrolisadorMw
+                        * 8760;
+
+                    return [
+                        numeroPt(
+                            dadosCalculo.planta.eletrolisadorMw,
+                            2
+                        )
+                        + " MW × 8.760 h = "
+                        + numeroPt(
+                            capacidadeAno,
+                            2
+                        )
+                        + " MWh/ano.",
+
+                        numeroPt(
+                            dadosCalculo.planta.energiaUtilAnoMwh,
+                            2
+                        )
+                        + " ÷ "
+                        + numeroPt(
+                            capacidadeAno,
+                            2
+                        )
+                        + " × 100 = "
+                        + numeroPt(
+                            dadosCalculo.planta.aproveitamento,
+                            1
+                        )
+                        + "%."
+                    ];
+                },
+
+                resultado: function () {
+                    return (
+                        "Aproveitamento calculado: "
+                        + numeroPt(
+                            dadosCalculo.planta.aproveitamento,
+                            1
+                        )
+                        + "%."
+                    );
+                },
+
+                classificacao:
+                    "Baixo: < 40% · Médio: 40% a < 70% · Alto: ≥ 70%.",
+
+                observacao:
+                    "É um indicador de dimensionamento energético, não "
+                    + "um fator de capacidade certificado do equipamento."
+            },
+
+
+            hidrogenio: {
+                titulo:
+                    "Produção estimada de H₂",
+
+                significado:
+                    "É a quantidade diária de hidrogênio produzível com "
+                    + "a energia útil da eletrólise.",
+
+                fonte:
+                    "Cálculo interno · energia útil + consumo específico",
+
+                dados: function () {
+                    return [
+                        dado(
+                            "Energia útil",
+                            numeroPt(
+                                dadosCalculo.planta.energiaUtilDiaMwh,
+                                2
+                            )
+                            + " MWh/dia"
+                        ),
+                        dado(
+                            "Consumo específico",
+                            numeroPt(
+                                dadosCalculo.planta.consumoEspecifico,
+                                2
+                            )
+                            + " kWh/kg"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    const energiaKwh =
+                        dadosCalculo.planta.energiaUtilDiaMwh
+                        * 1000;
+
+                    return [
+                        numeroPt(
+                            dadosCalculo.planta.energiaUtilDiaMwh,
+                            2
+                        )
+                        + " MWh × 1.000 = "
+                        + numeroPt(
+                            energiaKwh,
+                            2
+                        )
+                        + " kWh.",
+
+                        numeroPt(
+                            energiaKwh,
+                            2
+                        )
+                        + " kWh ÷ "
+                        + numeroPt(
+                            dadosCalculo.planta.consumoEspecifico,
+                            2
+                        )
+                        + " kWh/kg = "
+                        + numeroPt(
+                            dadosCalculo.planta.h2DiaKg,
+                            2
+                        )
+                        + " kg/dia."
+                    ];
+                },
+
+                resultado: function () {
+                    return (
+                        "Produção estimada: "
+                        + numeroPt(
+                            dadosCalculo.planta.h2DiaKg,
+                            2
+                        )
+                        + " kg H₂/dia."
+                    );
+                },
+
+                classificacao:
+                    "A produção de H₂ não recebe Baixo/Médio/Alto isoladamente, "
+                    + "porque depende do porte de planta escolhido pelo usuário.",
+
+                observacao:
+                    "Comparar kg/dia entre locais só faz sentido mantendo "
+                    + "os mesmos parâmetros de planta."
+            },
+
+
+            agua: {
+                titulo:
+                    "Demanda hídrica teórica",
+
+                significado:
+                    "É o volume mínimo teórico de água associado à produção "
+                    + "estimada de hidrogênio.",
+
+                fonte:
+                    "Cálculo estequiométrico do protótipo",
+
+                dados: function () {
+                    return [
+                        dado(
+                            "Produção de H₂",
+                            numeroPt(
+                                dadosCalculo.planta.h2DiaKg,
+                                2
+                            )
+                            + " kg/dia"
+                        ),
+                        dado(
+                            "Água adotada por kg de H₂",
+                            "9 L/kg"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    const litros =
+                        dadosCalculo.planta.h2DiaKg
+                        * 9;
+
+                    return [
+                        numeroPt(
+                            dadosCalculo.planta.h2DiaKg,
+                            2
+                        )
+                        + " kg H₂ × 9 L/kg = "
+                        + numeroPt(
+                            litros,
+                            2
+                        )
+                        + " L/dia.",
+
+                        numeroPt(
+                            litros,
+                            2
+                        )
+                        + " L ÷ 1.000 = "
+                        + numeroPt(
+                            dadosCalculo.planta.aguaDiaM3,
+                            2
+                        )
+                        + " m³/dia."
+                    ];
+                },
+
+                resultado: function () {
+                    return (
+                        "Demanda teórica: "
+                        + numeroPt(
+                            dadosCalculo.planta.aguaDiaM3,
+                            2
+                        )
+                        + " m³/dia."
+                    );
+                },
+
+                classificacao:
+                    "Esse card não recebe Baixo/Médio/Alto porque a demanda "
+                    + "cresce diretamente com o porte da produção.",
+
+                observacao:
+                    "O consumo operacional real tende a ser superior ao "
+                    + "mínimo teórico de 9 L/kg."
+            },
+
+
+            eolica: {
+                titulo:
+                    "Recurso eólico estimado",
+
+                significado:
+                    "Mostra o vento médio estimado a 100 m e a geração "
+                    + "específica de uma turbina normalizada de referência.",
+
+                fonte:
+                    dadosCalculo.eolica.disponivel
+                    ? dadosCalculo.eolica.fonte
+                    : "NASA POWER",
+
+                dados: function () {
+                    if (!dadosCalculo.eolica.disponivel) {
+                        return [];
+                    }
+
+                    return [
+                        dado(
+                            "Vento médio NASA a 10 m",
+                            numeroPt(
+                                dadosCalculo.eolica.v10,
+                                2
+                            )
+                            + " m/s"
+                        ),
+                        dado(
+                            "Vento médio NASA a 50 m",
+                            numeroPt(
+                                dadosCalculo.eolica.v50,
+                                2
+                            )
+                            + " m/s"
+                        ),
+                        dado(
+                            "Dias válidos",
+                            String(
+                                dadosCalculo.eolica.dias
+                            )
+                        ),
+                        dado(
+                            "α médio calculado",
+                            numeroPt(
+                                dadosCalculo.eolica.alfa,
+                                3
+                            )
+                        ),
+                        dado(
+                            "Fator de capacidade de referência",
+                            numeroPt(
+                                dadosCalculo.eolica.fatorCapacidade,
+                                1
+                            )
+                            + "%"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    if (!dadosCalculo.eolica.disponivel) {
+                        return [
+                            "Não há dados eólicos suficientes para detalhar o cálculo."
+                        ];
+                    }
+
+                    return [
+                        "Para cada dia, são lidos WS10M e WS50M da NASA POWER.",
+
+                        "Em cada dia: α = ln(V50/V10) ÷ ln(5). "
+                        + "O α não é fixado; é calculado a partir dos próprios "
+                        + "dados daquele dia.",
+
+                        "Em cada dia: V100 = V50 × (100/50)^α.",
+
+                        "Depois são somadas as "
+                        + dadosCalculo.eolica.dias
+                        + " estimativas diárias de V100 (Σ = "
+                        + numeroPt(
+                            dadosCalculo.eolica.somaV100,
+                            3
+                        )
+                        + ") e divididas pelos dias válidos.",
+
+                        numeroPt(
+                            dadosCalculo.eolica.somaV100,
+                            3
+                        )
+                        + " ÷ "
+                        + dadosCalculo.eolica.dias
+                        + " = "
+                        + numeroPt(
+                            dadosCalculo.eolica.v100,
+                            2
+                        )
+                        + " m/s a 100 m.",
+
+                        "Cada V100 diário passa pela curva normalizada da turbina. "
+                        + "A média das potências relativas gera FC = "
+                        + numeroPt(
+                            dadosCalculo.eolica.fatorCapacidade,
+                            1
+                        )
+                        + "%.",
+
+                        "1 MW × 8.760 h × "
+                        + numeroPt(
+                            dadosCalculo.eolica.fatorCapacidade / 100,
+                            3
+                        )
+                        + " = "
+                        + numeroPt(
+                            dadosCalculo.eolica.geracao,
+                            0
+                        )
+                        + " MWh/MW.ano."
+                    ];
+                },
+
+                resultado: function () {
+                    if (!dadosCalculo.eolica.disponivel) {
+                        return "Sem resultado eólico disponível.";
+                    }
+
+                    return (
+                        "Vento médio estimado: "
+                        + numeroPt(
+                            dadosCalculo.eolica.v100,
+                            2
+                        )
+                        + " m/s a 100 m · geração de referência: "
+                        + numeroPt(
+                            dadosCalculo.eolica.geracao,
+                            0
+                        )
+                        + " MWh/MW.ano."
+                    );
+                },
+
+                classificacao:
+                    "A classificação Baixo/Médio/Alto é aplicada à velocidade "
+                    + "média estimada a 100 m.",
+
+                observacao:
+                    "A estimativa usa dados diários e uma curva de turbina "
+                    + "genérica. Para projeto, deve-se usar série horária e "
+                    + "curva oficial de fabricante."
+            },
+
+
+            eolica_indicador: {
+                titulo:
+                    "Nível do recurso eólico",
+
+                significado:
+                    "Classifica o vento médio estimado a 100 m.",
+
+                fonte:
+                    dadosCalculo.eolica.disponivel
+                    ? dadosCalculo.eolica.fonte
+                    : "NASA POWER",
+
+                dados: function () {
+                    if (!dadosCalculo.eolica.disponivel) {
+                        return [];
+                    }
+
+                    return [
+                        dado(
+                            "WS10M médio",
+                            numeroPt(
+                                dadosCalculo.eolica.v10,
+                                2
+                            )
+                            + " m/s"
+                        ),
+                        dado(
+                            "WS50M médio",
+                            numeroPt(
+                                dadosCalculo.eolica.v50,
+                                2
+                            )
+                            + " m/s"
+                        ),
+                        dado(
+                            "V100 calculado",
+                            numeroPt(
+                                dadosCalculo.eolica.v100,
+                                2
+                            )
+                            + " m/s"
+                        ),
+                        dado(
+                            "Dias usados",
+                            String(
+                                dadosCalculo.eolica.dias
+                            )
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    if (!dadosCalculo.eolica.disponivel) {
+                        return [
+                            "Não há dados eólicos suficientes."
+                        ];
+                    }
+
+                    return [
+                        "O V100 é calculado diariamente a partir de WS10M "
+                        + "e WS50M usando a lei de potência.",
+
+                        "A média das estimativas diárias resultou em "
+                        + numeroPt(
+                            dadosCalculo.eolica.v100,
+                            2
+                        )
+                        + " m/s."
+                    ];
+                },
+
+                resultado: function () {
+                    if (!dadosCalculo.eolica.disponivel) {
+                        return "Sem classificação.";
+                    }
+
+                    return (
+                        "Valor classificado: "
+                        + numeroPt(
+                            dadosCalculo.eolica.v100,
+                            2
+                        )
+                        + " m/s → "
+                        + dadosCalculo.eolica.nivel
+                        + "."
+                    );
+                },
+
+                classificacao:
+                    "Baixo: < 6,0 m/s · Médio: 6,0 a < 7,0 m/s · "
+                    + "Alto: ≥ 7,0 m/s, sempre a 100 m.",
+
+                observacao:
+                    "As faixas são preliminares e não substituem campanha "
+                    + "anemométrica ou estudo eólico de sítio."
+            },
+
+
+            recurso_hidrico: {
+                titulo:
+                    "Referência hídrica",
+
+                significado:
+                    "É o curso d'água selecionado como referência hídrica "
+                    + "e a distância geométrica até ele.",
+
+                fonte:
+                    dadosCalculo.aguaReferencia.disponivel
+                    ? dadosCalculo.aguaReferencia.fonte
+                    : "ANA/SNIRH",
+
+                dados: function () {
+                    if (!dadosCalculo.aguaReferencia.disponivel) {
+                        return [];
+                    }
+
+                    return [
+                        dado(
+                            "Curso selecionado",
+                            dadosCalculo.aguaReferencia.nome
+                        ),
+                        dado(
+                            "Domínio informado",
+                            dadosCalculo.aguaReferencia.dominio
+                        ),
+                        dado(
+                            "Distância calculada",
+                            numeroPt(
+                                dadosCalculo.aguaReferencia.distancia,
+                                2
+                            )
+                            + " km"
+                        ),
+                        dado(
+                            "Código do curso",
+                            dadosCalculo.aguaReferencia.codigo
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    if (!dadosCalculo.aguaReferencia.disponivel) {
+                        return [
+                            "Nenhum recurso hídrico foi selecionado."
+                        ];
+                    }
+
+                    return [
+                        "A ANA/SNIRH retorna geometrias de eixos de drenagem "
+                        + "próximas à coordenada da planta.",
+
+                        "O sistema compara o ponto da planta com cada segmento "
+                        + "do eixo hidrográfico e encontra o ponto geometricamente "
+                        + "mais próximo.",
+
+                        "Para o recurso selecionado, a menor distância encontrada "
+                        + "foi "
+                        + numeroPt(
+                            dadosCalculo.aguaReferencia.distancia,
+                            2
+                        )
+                        + " km."
+                    ];
+                },
+
+                resultado: function () {
+                    if (!dadosCalculo.aguaReferencia.disponivel) {
+                        return "Sem referência hídrica.";
+                    }
+
+                    return (
+                        dadosCalculo.aguaReferencia.nome
+                        + " · "
+                        + numeroPt(
+                            dadosCalculo.aguaReferencia.distancia,
+                            2
+                        )
+                        + " km da planta."
+                    );
+                },
+
+                classificacao:
+                    "A distância deste card é usada no indicador "
+                    + "“Proximidade da água”.",
+
+                observacao:
+                    "A geometria representa o eixo de drenagem da base. "
+                    + "Distância não significa disponibilidade para captação."
+            },
+
+
+            agua_indicador: {
+                titulo:
+                    "Nível de proximidade da água",
+
+                significado:
+                    "Classifica a distância entre a planta e o recurso "
+                    + "hídrico atualmente selecionado.",
+
+                fonte:
+                    dadosCalculo.aguaReferencia.disponivel
+                    ? dadosCalculo.aguaReferencia.fonte
+                    : "ANA/SNIRH",
+
+                dados: function () {
+                    if (!dadosCalculo.aguaReferencia.disponivel) {
+                        return [];
+                    }
+
+                    return [
+                        dado(
+                            "Recurso",
+                            dadosCalculo.aguaReferencia.nome
+                        ),
+                        dado(
+                            "Distância",
+                            numeroPt(
+                                dadosCalculo.aguaReferencia.distancia,
+                                2
+                            )
+                            + " km"
+                        )
+                    ];
+                },
+
+                passos: function () {
+                    if (!dadosCalculo.aguaReferencia.disponivel) {
+                        return [
+                            "Não há distância disponível para classificar."
+                        ];
+                    }
+
+                    return [
+                        "O valor usado é exatamente a distância calculada "
+                        + "para a referência hídrica: "
+                        + numeroPt(
+                            dadosCalculo.aguaReferencia.distancia,
+                            2
+                        )
+                        + " km.",
+
+                        "Esse valor é comparado com as faixas de proximidade "
+                        + "definidas no protótipo."
+                    ];
+                },
+
+                resultado: function () {
+                    if (!dadosCalculo.aguaReferencia.disponivel) {
+                        return "Sem classificação.";
+                    }
+
+                    const distancia =
+                        dadosCalculo.aguaReferencia.distancia;
+
+                    const nivel =
+                        distancia <= 5
+                            ? "Alta"
+                            : (
+                                distancia <= 20
+                                    ? "Média"
+                                    : "Baixa"
+                            );
+
+                    return (
+                        numeroPt(
+                            distancia,
+                            2
+                        )
+                        + " km → proximidade "
+                        + nivel
+                        + "."
+                    );
+                },
+
+                classificacao:
+                    "Alta: ≤ 5 km · Média: > 5 e ≤ 20 km · Baixa: > 20 km.",
+
+                observacao:
+                    "É apenas um indicador de distância física. "
+                    + "Vazão, outorga, qualidade e custo de bombeamento "
+                    + "são critérios separados."
+            }
+        };
+
+
+        const modalAjuda =
+            document.getElementById(
+                "modal-ajuda"
+            );
+
+        const modalAjudaTitulo =
+            document.getElementById(
+                "modal-ajuda-titulo"
+            );
+
+        const modalAjudaCorpo =
+            document.getElementById(
+                "modal-ajuda-corpo"
+            );
+
+        const modalAjudaFechar =
+            document.getElementById(
+                "modal-ajuda-fechar"
+            );
+
+        let ultimoBotaoAjuda =
+            null;
+
+
+        function montarDadosAjuda(
+            itens
+        ) {
+
+            if (!Array.isArray(itens) || !itens.length) {
+                return "";
+            }
+
+            return (
+                "<div class='ajuda-dados'>"
+                + itens.map(
+                    function (item) {
+                        return (
+                            "<div class='ajuda-dado'>"
+                            + "<small>"
+                            + item.rotulo
+                            + "</small>"
+                            + "<strong>"
+                            + item.valor
+                            + "</strong>"
+                            + "</div>"
+                        );
+                    }
+                ).join("")
+                + "</div>"
+            );
+        }
+
+
+        function montarPassosAjuda(
+            passos
+        ) {
+
+            if (!Array.isArray(passos) || !passos.length) {
+                return "";
+            }
+
+            return (
+                "<div class='ajuda-passos'>"
+                + passos.map(
+                    function (passo, indice) {
+                        return (
+                            "<div class='ajuda-passo'>"
+                            + "<div class='ajuda-passo-numero'>"
+                            + (indice + 1)
+                            + "</div>"
+                            + "<div class='ajuda-passo-texto'>"
+                            + passo
+                            + "</div>"
+                            + "</div>"
+                        );
+                    }
+                ).join("")
+                + "</div>"
+            );
+        }
+
+
+        function abrirAjuda(chave, botao) {
+
+            const ajuda =
+                conteudosAjuda[chave];
+
+            if (!ajuda || !modalAjuda) {
+                return;
+            }
+
+            ultimoBotaoAjuda =
+                botao || null;
+
+            modalAjudaTitulo.textContent =
+                ajuda.titulo;
+
+            const dados =
+                typeof ajuda.dados === "function"
+                    ? ajuda.dados()
+                    : [];
+
+            const passos =
+                typeof ajuda.passos === "function"
+                    ? ajuda.passos()
+                    : [];
+
+            const resultado =
+                typeof ajuda.resultado === "function"
+                    ? ajuda.resultado()
+                    : "";
+
+            modalAjudaCorpo.innerHTML =
+                "<div class='ajuda-bloco'>"
+                + "<h4>O que este dado significa?</h4>"
+                + "<p>"
+                + ajuda.significado
+                + "</p>"
+                + (
+                    ajuda.fonte
+                        ? (
+                            "<div class='ajuda-fonte'>Fonte: "
+                            + ajuda.fonte
+                            + "</div>"
+                        )
+                        : ""
+                )
+                + "</div>"
+
+                + "<div class='ajuda-bloco'>"
+                + "<h4>Quais dados foram usados nesta análise?</h4>"
+                + montarDadosAjuda(
+                    dados
+                )
+                + "</div>"
+
+                + "<div class='ajuda-bloco'>"
+                + "<h4>Como chegamos ao valor numérico?</h4>"
+                + montarPassosAjuda(
+                    passos
+                )
+                + (
+                    resultado
+                        ? (
+                            "<div class='ajuda-resultado-calculo'>"
+                            + resultado
+                            + "</div>"
+                        )
+                        : ""
+                )
+                + "</div>"
+
+                + "<div class='ajuda-bloco'>"
+                + "<h4>Como o nível é definido?</h4>"
+                + "<div class='ajuda-classificacao'>"
+                + ajuda.classificacao
+                + "</div>"
+                + "</div>"
+
+                + "<div class='ajuda-observacao'>"
+                + ajuda.observacao
+                + "</div>";
+
+            modalAjuda.classList.add(
+                "aberto"
+            );
+
+            modalAjuda.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            document.body.classList.add(
+                "modal-aberto"
+            );
+
+            if (modalAjudaFechar) {
+                modalAjudaFechar.focus();
+            }
+        }
+
+        function fecharAjuda() {
+
+            if (!modalAjuda) {
+                return;
+            }
+
+            modalAjuda.classList.remove(
+                "aberto"
+            );
+
+            modalAjuda.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            document.body.classList.remove(
+                "modal-aberto"
+            );
+
+            if (ultimoBotaoAjuda) {
+                ultimoBotaoAjuda.focus();
+            }
+        }
+
+
+        document.querySelectorAll(
+            ".ajuda-card"
+        ).forEach(
+            function (botao) {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+                        abrirAjuda(
+                            botao.dataset.ajuda,
+                            botao
+                        );
+                    }
+                );
+            }
+        );
+
+
+        if (modalAjudaFechar) {
+            modalAjudaFechar.addEventListener(
+                "click",
+                fecharAjuda
+            );
+        }
+
+
+        if (modalAjuda) {
+            modalAjuda.addEventListener(
+                "click",
+                function (evento) {
+                    if (evento.target === modalAjuda) {
+                        fecharAjuda();
+                    }
+                }
+            );
+        }
+
+
+        document.addEventListener(
+            "keydown",
+            function (evento) {
+                if (
+                    evento.key === "Escape"
+                    && modalAjuda
+                    && modalAjuda.classList.contains("aberto")
+                ) {
+                    fecharAjuda();
+                }
+            }
+        );
+
+        /*
+         * LEITURA SIMPLES / DADOS TÉCNICOS
+         */
+
+        const botaoModoSimples =
+            document.getElementById(
+                "modo-simples"
+            );
+
+        const botaoModoTecnico =
+            document.getElementById(
+                "modo-tecnico"
+            );
+
+        function definirModo(modo) {
+
+            const tecnico =
+                modo === "tecnico";
+
+            document.body.classList.toggle(
+                "modo-simples",
+                !tecnico
+            );
+
+            if (botaoModoSimples) {
+                botaoModoSimples.classList.toggle(
+                    "ativo",
+                    !tecnico
+                );
+            }
+
+            if (botaoModoTecnico) {
+                botaoModoTecnico.classList.toggle(
+                    "ativo",
+                    tecnico
+                );
+            }
+
+            localStorage.setItem(
+                "h2v_modo_resultado",
+                modo
+            );
+        }
+
+        if (
+            botaoModoSimples
+            && botaoModoTecnico
+        ) {
+
+            botaoModoSimples.addEventListener(
+                "click",
+                function () {
+                    definirModo(
+                        "simples"
+                    );
+                }
+            );
+
+            botaoModoTecnico.addEventListener(
+                "click",
+                function () {
+                    definirModo(
+                        "tecnico"
+                    );
+                }
+            );
+
+            definirModo(
+                localStorage.getItem(
+                    "h2v_modo_resultado"
+                )
+                || "simples"
+            );
+        }
+
+        /*
+         * MAPAS BASE
+         */
+
+        const mapaBaseOSM =
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    maxZoom: 19,
+                    attribution:
+                        "&copy; OpenStreetMap contributors"
+                }
+            );
+
+        const mapaSatelite =
+            L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                {
+                    maxZoom: 19,
+                    attribution:
+                        "Tiles &copy; Esri"
+                }
+            );
+
+        const mapa = L.map(
+            "mapa",
+            {
+                layers: [
+                    mapaBaseOSM
+                ]
+            }
+        ).setView(
+            [
+                -14.235,
+                -51.9253
+            ],
+            4
+        );
+
+        const ZOOM_SELECAO = 13;
+
+        L.control.layers(
+            {
+                "Mapa":
+                    mapaBaseOSM,
+
+                "Satélite":
+                    mapaSatelite
+            },
+            {},
+            {
+                collapsed: false
+            }
+        ).addTo(mapa);
+
+        L.control.scale(
+            {
+                imperial: false
+            }
+        ).addTo(mapa);
+
+        /*
+         * LEGENDA
+         */
+
+        const legenda =
+            L.control(
+                {
+                    position:
+                        "bottomright"
+                }
+            );
+
+        legenda.onAdd =
+            function () {
+
+                const div =
+                    L.DomUtil.create(
+                        "div",
+                        "mapa-legenda"
+                    );
+
+                div.innerHTML =
+                    "<strong>Legenda</strong><br>"
+                    + "H₂ &nbsp; Local da planta<br>"
+                    + "💧 &nbsp; Ponto hídrico<br>"
+                    + "<span class='legenda-linha'></span>"
+                    + "Eixo ANA<br>"
+                    + "<span class='legenda-distancia'></span>"
+                    + "Distância";
+
+                return div;
+            };
+
+        legenda.addTo(mapa);
+
+        let marcador = null;
+        let camadaRio = null;
+        let linhaLigacao = null;
+        let marcadorAgua = null;
+        let marcadoresCandidatos = [];
+
+        const iconePlanta =
+            L.divIcon(
+                {
+                    className: "",
+                    html:
+                        "<div class='icone-planta'>H₂</div>",
+                    iconSize:
+                        [34, 34],
+                    iconAnchor:
+                        [17, 17]
+                }
+            );
+
+        const iconeAgua =
+            L.divIcon(
+                {
+                    className: "",
+                    html:
+                        "<div class='icone-agua'>💧</div>",
+                    iconSize:
+                        [38, 38],
+                    iconAnchor:
+                        [19, 19]
+                }
+            );
+
+        function coordenadasValidas(
+            latitude,
+            longitude
+        ) {
+            return (
+                Number.isFinite(latitude)
+                && Number.isFinite(longitude)
+                && latitude >= -90
+                && latitude <= 90
+                && longitude >= -180
+                && longitude <= 180
+            );
+        }
+
+        function numeroPositivo(valor) {
+
+            const numero =
+                parseFloat(valor);
+
+            return (
+                Number.isFinite(numero)
+                && numero > 0
+            );
+        }
+
+        function parametrosValidos() {
+
+            return (
+                numeroPositivo(
+                    potenciaSolarInput.value
+                )
+                && numeroPositivo(
+                    performanceRatioInput.value
+                )
+                && parseFloat(
+                    performanceRatioInput.value
+                ) <= 100
+                && numeroPositivo(
+                    potenciaEletrolisadorInput.value
+                )
+                && numeroPositivo(
+                    consumoEspecificoInput.value
+                )
+            );
+        }
+
+        function atualizarBotao() {
+
+            const latitude =
+                parseFloat(
+                    latitudeInput.value
+                );
+
+            const longitude =
+                parseFloat(
+                    longitudeInput.value
+                );
+
+            botaoAnalisar.disabled = !(
+                coordenadasValidas(
+                    latitude,
+                    longitude
+                )
+                && parametrosValidos()
+            );
+        }
+
+        function atualizarMarcador(
+            latitude,
+            longitude,
+            centralizar = true
+        ) {
+
+            if (
+                !coordenadasValidas(
+                    latitude,
+                    longitude
+                )
+            ) {
+                return;
+            }
+
+            if (!marcador) {
+
+                marcador =
+                    L.marker(
+                        [
+                            latitude,
+                            longitude
+                        ],
+                        {
+                            draggable: true,
+                            icon: iconePlanta
+                        }
+                    ).addTo(mapa);
+
+                marcador.on(
+                    "dragend",
+                    function () {
+
+                        const ponto =
+                            marcador.getLatLng();
+
+                        selecionarPonto(
+                            ponto.lat,
+                            ponto.lng,
+                            false
+                        );
+                    }
+                );
+
+            } else {
+
+                marcador.setLatLng(
+                    [
+                        latitude,
+                        longitude
+                    ]
+                );
+            }
+
+            marcador.bindPopup(
+                "<strong>Planta H₂V</strong><br>"
+                + latitude.toFixed(6)
+                + ", "
+                + longitude.toFixed(6)
+            );
+
+            if (centralizar) {
+
+                mapa.setView(
+                    [
+                        latitude,
+                        longitude
+                    ],
+                    ZOOM_SELECAO
+                );
+            }
+        }
+
+        function selecionarPonto(
+            latitude,
+            longitude,
+            centralizar = true
+        ) {
+
+            latitudeInput.value =
+                latitude.toFixed(6);
+
+            longitudeInput.value =
+                longitude.toFixed(6);
+
+            atualizarMarcador(
+                latitude,
+                longitude,
+                centralizar
+            );
+
+            atualizarBotao();
+        }
+
+        mapa.on(
+            "click",
+            function (evento) {
+
+                selecionarPonto(
+                    evento.latlng.lat,
+                    evento.latlng.lng,
+                    true
+                );
+
+                if (marcador) {
+                    marcador.openPopup();
+                }
+            }
+        );
+
+        function usarCoordenadasDigitadas() {
+
+            const latitude =
+                parseFloat(
+                    latitudeInput.value
+                );
+
+            const longitude =
+                parseFloat(
+                    longitudeInput.value
+                );
+
+            if (
+                coordenadasValidas(
+                    latitude,
+                    longitude
+                )
+            ) {
+
+                atualizarMarcador(
+                    latitude,
+                    longitude,
+                    true
+                );
+            }
+
+            atualizarBotao();
+        }
+
+        latitudeInput.addEventListener(
+            "change",
+            usarCoordenadasDigitadas
+        );
+
+        longitudeInput.addEventListener(
+            "change",
+            usarCoordenadasDigitadas
+        );
+
+        [
+            latitudeInput,
+            longitudeInput,
+            potenciaSolarInput,
+            performanceRatioInput,
+            potenciaEletrolisadorInput,
+            consumoEspecificoInput
+        ].forEach(
+            function (campo) {
+
+                campo.addEventListener(
+                    "input",
+                    atualizarBotao
+                );
+            }
+        );
+
+        const elementoPonto =
+            document.getElementById(
+                "ponto-selecionado-data"
+            );
+
+        let pontoSelecionado =
+            null;
+
+        if (elementoPonto) {
+
+            try {
+
+                pontoSelecionado =
+                    JSON.parse(
+                        elementoPonto.textContent
+                    );
+
+                const latitude =
+                    Number(
+                        pontoSelecionado.latitude
+                    );
+
+                const longitude =
+                    Number(
+                        pontoSelecionado.longitude
+                    );
+
+                if (
+                    coordenadasValidas(
+                        latitude,
+                        longitude
+                    )
+                ) {
+
+                    selecionarPonto(
+                        latitude,
+                        longitude,
+                        false
+                    );
+                }
+
+            } catch (erro) {
+
+                console.error(
+                    "Erro ao restaurar localização:",
+                    erro
+                );
+            }
+        }
+
+        /*
+         * HIDROGRAFIA
+         */
+
+        const elementoHidrografia =
+            document.getElementById(
+                "hidrografia-data"
+            );
+
+        const elementoPontoAgua =
+            document.getElementById(
+                "hidrografia-ponto-data"
+            );
+
+        const elementoCandidatosAgua =
+            document.getElementById(
+                "hidrografia-candidatos-data"
+            );
+
+        if (
+            elementoHidrografia
+            && elementoPontoAgua
+        ) {
+
+            try {
+
+                const geometria =
+                    JSON.parse(
+                        elementoHidrografia.textContent
+                    );
+
+                const pontoAgua =
+                    JSON.parse(
+                        elementoPontoAgua.textContent
+                    );
+
+                const candidatosAgua =
+                    elementoCandidatosAgua
+                        ? JSON.parse(
+                            elementoCandidatosAgua.textContent
+                        )
+                        : [];
+
+                const latitudeAgua =
+                    Number(
+                        pontoAgua.latitude
+                    );
+
+                const longitudeAgua =
+                    Number(
+                        pontoAgua.longitude
+                    );
+
+                /*
+                 * OUTROS CANDIDATOS HÍDRICOS
+                 *
+                 * O recurso selecionado recebe o marcador grande.
+                 * Os demais aparecem como pontos auxiliares.
+                 */
+
+                if (Array.isArray(candidatosAgua)) {
+
+                    candidatosAgua.forEach(
+                        function (candidato, indice) {
+
+                            if (
+                                String(candidato.id)
+                                === String(pontoAgua.id)
+                            ) {
+                                return;
+                            }
+
+                            const latCandidato =
+                                Number(candidato.latitude_proxima);
+
+                            const lonCandidato =
+                                Number(candidato.longitude_proxima);
+
+                            if (
+                                !coordenadasValidas(
+                                    latCandidato,
+                                    lonCandidato
+                                )
+                            ) {
+                                return;
+                            }
+
+                            const marcadorCandidato =
+                                L.circleMarker(
+                                    [
+                                        latCandidato,
+                                        lonCandidato
+                                    ],
+                                    {
+                                        radius: 6,
+                                        weight: 2,
+                                        fillOpacity: 0.7
+                                    }
+                                ).addTo(mapa);
+
+                            marcadorCandidato.bindTooltip(
+                                (indice + 1)
+                                + ". "
+                                + candidato.nome
+                                + " · "
+                                + Number(
+                                    candidato.distancia_km
+                                ).toFixed(2)
+                                + " km",
+                                {
+                                    direction: "right"
+                                }
+                            );
+
+                            marcadoresCandidatos.push(
+                                marcadorCandidato
+                            );
+                        }
+                    );
+                }
+
+                /*
+                 * Eixo ANA - desenho fino,
+                 * sem aparência de limite/polígono.
+                 */
+
+                if (
+                    Array.isArray(
+                        geometria
+                    )
+                    && geometria.length > 1
+                ) {
+
+                    camadaRio =
+                        L.polyline(
+                            geometria,
+                            {
+                                weight: 4,
+                                opacity: 0.78,
+                                lineCap: "round",
+                                lineJoin: "round"
+                            }
+                        ).addTo(mapa);
+
+                    camadaRio.bindTooltip(
+                        "Eixo hidrográfico ANA",
+                        {
+                            sticky: true
+                        }
+                    );
+                }
+
+                if (
+                    coordenadasValidas(
+                        latitudeAgua,
+                        longitudeAgua
+                    )
+                ) {
+
+                    /*
+                     * MARCADOR DE ÁGUA
+                     */
+
+                    marcadorAgua =
+                        L.marker(
+                            [
+                                latitudeAgua,
+                                longitudeAgua
+                            ],
+                            {
+                                icon:
+                                    iconeAgua,
+                                zIndexOffset:
+                                    1000
+                            }
+                        ).addTo(mapa);
+
+                    marcadorAgua.bindPopup(
+                        "<strong>Recurso hídrico</strong><br>"
+                        + pontoAgua.nome
+                        + "<br>"
+                        + Number(
+                            pontoAgua.distancia_km
+                        ).toFixed(2)
+                        + " km da planta"
+                    );
+
+                    marcadorAgua.bindTooltip(
+                        "Água · "
+                        + Number(
+                            pontoAgua.distancia_km
+                        ).toFixed(2)
+                        + " km",
+                        {
+                            permanent: true,
+                            direction: "top",
+                            offset: [0, -19],
+                            className:
+                                "tooltip-agua"
+                        }
+                    );
+
+                    /*
+                     * DISTÂNCIA PLANTA -> ÁGUA
+                     */
+
+                    if (pontoSelecionado) {
+
+                        const latitudePlanta =
+                            Number(
+                                pontoSelecionado.latitude
+                            );
+
+                        const longitudePlanta =
+                            Number(
+                                pontoSelecionado.longitude
+                            );
+
+                        linhaLigacao =
+                            L.polyline(
+                                [
+                                    [
+                                        latitudePlanta,
+                                        longitudePlanta
+                                    ],
+                                    [
+                                        latitudeAgua,
+                                        longitudeAgua
+                                    ]
+                                ],
+                                {
+                                    weight: 2,
+                                    opacity: 0.8,
+                                    dashArray:
+                                        "7, 7"
+                                }
+                            ).addTo(mapa);
+
+                        linhaLigacao.bindTooltip(
+                            Number(
+                                pontoAgua.distancia_km
+                            ).toFixed(2)
+                            + " km",
+                            {
+                                sticky: true
+                            }
+                        );
+
+                        /*
+                         * Em vez de zoom fixo,
+                         * aproxima exatamente a relação
+                         * entre planta e água.
+                         */
+
+                        const limites =
+                            L.latLngBounds(
+                                [
+                                    [
+                                        latitudePlanta,
+                                        longitudePlanta
+                                    ],
+                                    [
+                                        latitudeAgua,
+                                        longitudeAgua
+                                    ]
+                                ]
+                            );
+
+                        if (
+                            camadaRio
+                            && camadaRio.getBounds
+                        ) {
+
+                            limites.extend(
+                                camadaRio.getBounds()
+                            );
+                        }
+
+                        mapa.fitBounds(
+                            limites,
+                            {
+                                padding:
+                                    [55, 55],
+
+                                maxZoom:
+                                    14,
+
+                                animate:
+                                    false
+                            }
+                        );
+                    }
+                }
+
+            } catch (erro) {
+
+                console.error(
+                    "Erro ao desenhar hidrografia:",
+                    erro
+                );
+            }
+
+        } else if (pontoSelecionado) {
+
+            mapa.setView(
+                [
+                    Number(
+                        pontoSelecionado.latitude
+                    ),
+                    Number(
+                        pontoSelecionado.longitude
+                    )
+                ],
+                ZOOM_SELECAO
+            );
+        }
+
+
+        /*
+         * ESTAÇÕES FLUVIOMÉTRICAS
+         */
+
+        const elementoEstacoes =
+            document.getElementById(
+                "estacoes-fluviometricas-data"
+            );
+
+        if (elementoEstacoes) {
+
+            try {
+
+                const estacoes =
+                    JSON.parse(
+                        elementoEstacoes.textContent
+                    );
+
+                if (Array.isArray(estacoes)) {
+
+                    estacoes.forEach(
+                        function (estacao) {
+
+                            const latitudeEstacao =
+                                Number(estacao.latitude);
+
+                            const longitudeEstacao =
+                                Number(estacao.longitude);
+
+                            if (
+                                !coordenadasValidas(
+                                    latitudeEstacao,
+                                    longitudeEstacao
+                                )
+                            ) {
+                                return;
+                            }
+
+                            const classeSelecionada =
+                                estacao.selecionada
+                                    ? " selecionada"
+                                    : "";
+
+                            const iconeEstacao =
+                                L.divIcon(
+                                    {
+                                        className: "",
+                                        html:
+                                            "<div class='icone-estacao"
+                                            + classeSelecionada
+                                            + "'>▲</div>",
+                                        iconSize: [30, 30],
+                                        iconAnchor: [15, 15]
+                                    }
+                                );
+
+                            const marcadorEstacao =
+                                L.marker(
+                                    [
+                                        latitudeEstacao,
+                                        longitudeEstacao
+                                    ],
+                                    {
+                                        icon: iconeEstacao,
+                                        zIndexOffset:
+                                            estacao.selecionada
+                                                ? 900
+                                                : 500
+                                    }
+                                ).addTo(mapa);
+
+                            marcadorEstacao.bindPopup(
+                                "<strong>"
+                                + estacao.nome
+                                + "</strong><br>"
+                                + "Código ANA: "
+                                + estacao.codigo
+                                + "<br>"
+                                + estacao.rio
+                                + "<br>"
+                                + Number(
+                                    estacao.distancia_km
+                                ).toFixed(2)
+                                + " km do recurso hídrico"
+                            );
+
+                            if (estacao.selecionada) {
+                                marcadorEstacao.bindTooltip(
+                                    "Estação ANA · "
+                                    + Number(
+                                        estacao.distancia_km
+                                    ).toFixed(2)
+                                    + " km",
+                                    {
+                                        permanent: true,
+                                        direction: "right",
+                                        offset: [16, 0],
+                                        className: "tooltip-estacao"
+                                    }
+                                );
+                            }
+                        }
+                    );
+                }
+
+            } catch (erro) {
+
+                console.error(
+                    "Erro ao desenhar estações fluviométricas:",
+                    erro
+                );
+            }
+        }
+
+        /*
+         * TROCAR RECURSO HÍDRICO DE REFERÊNCIA
+         */
+
+        document.querySelectorAll(
+            ".botao-recurso"
+        ).forEach(
+            function (botao) {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        const parametros =
+                            new URLSearchParams(
+                                window.location.search
+                            );
+
+                        parametros.set(
+                            "recurso",
+                            botao.dataset.recurso
+                        );
+
+                        /* A estação depende do recurso escolhido. */
+                        parametros.delete(
+                            "estacao"
+                        );
+
+                        window.location.assign(
+                            window.location.pathname
+                            + "?"
+                            + parametros.toString()
+                        );
+                    }
+                );
+            }
+        );
+
+
+        /*
+         * TROCAR ESTAÇÃO FLUVIOMÉTRICA
+         */
+
+        document.querySelectorAll(
+            ".botao-estacao"
+        ).forEach(
+            function (botao) {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        const parametros =
+                            new URLSearchParams(
+                                window.location.search
+                            );
+
+                        parametros.set(
+                            "estacao",
+                            botao.dataset.estacao
+                        );
+
+                        window.location.assign(
+                            window.location.pathname
+                            + "?"
+                            + parametros.toString()
+                        );
+                    }
+                );
+            }
+        );
+
+        /*
+         * ANALISAR - GET
+         */
+
+        botaoAnalisar.addEventListener(
+            "click",
+            function () {
+
+                const latitude =
+                    parseFloat(
+                        latitudeInput.value
+                    );
+
+                const longitude =
+                    parseFloat(
+                        longitudeInput.value
+                    );
+
+                if (
+                    !coordenadasValidas(
+                        latitude,
+                        longitude
+                    )
+                    || !parametrosValidos()
+                ) {
+                    return;
+                }
+
+                /*
+                 * Retorno visual imediato enquanto as APIs são consultadas.
+                 */
+                botaoAnalisar.disabled = true;
+                botaoAnalisar.classList.add(
+                    "analisando"
+                );
+                botaoAnalisar.textContent =
+                    "Analisando...";
+
+                const parametros =
+                    new URLSearchParams(
+                        {
+                            latitude:
+                                latitude.toFixed(6),
+
+                            longitude:
+                                longitude.toFixed(6),
+
+                            potencia_solar_mwp:
+                                potenciaSolarInput.value,
+
+                            performance_ratio:
+                                performanceRatioInput.value,
+
+                            potencia_eletrolisador_mw:
+                                potenciaEletrolisadorInput.value,
+
+                            consumo_especifico:
+                                consumoEspecificoInput.value
+                        }
+                    );
+
+                window.location.assign(
+                    window.location.pathname
+                    + "?"
+                    + parametros.toString()
+                );
+            }
+        );
+
+        setTimeout(
+            function () {
+                mapa.invalidateSize();
+            },
+            200
+        );
+
+        atualizarBotao();
+    }
+);
+</script>
+
+
+<div
+    class="modal-ajuda"
+    id="modal-ajuda"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-ajuda-titulo"
+    aria-hidden="true"
+>
+    <div class="modal-ajuda-caixa">
+
+        <div class="modal-ajuda-topo">
+
+            <h3 id="modal-ajuda-titulo">
+                Entenda este dado
+            </h3>
+
+            <button
+                type="button"
+                class="modal-ajuda-fechar"
+                id="modal-ajuda-fechar"
+                aria-label="Fechar"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div
+            class="modal-ajuda-corpo"
+            id="modal-ajuda-corpo"
+        ></div>
+
+    </div>
+</div>
+
+</body>
+</html>
