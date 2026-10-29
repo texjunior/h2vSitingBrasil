@@ -10,6 +10,7 @@
     >
 
     <title>H2V-Siting Brasil</title>
+    <!-- Acesso à nova ferramenta de simulação visual -->
 
     <link
         rel="stylesheet"
@@ -2116,6 +2117,7 @@
 </head>
 
 <body>
+<div style="background:#e1f4ec;padding:10px 20px;text-align:center;font:600 14px Arial,sans-serif"><a href="/laboratorio/" style="color:#075c43">☀️🌬️ Conheça o novo Laboratório Visual: gráficos horários, dimensionamento de H₂ e equipamentos →</a></div>
 
 <header class="topo">
     <div class="topo-conteudo">
@@ -5145,11 +5147,11 @@ document.addEventListener(
 
         const mapaBaseOSM =
             L.tileLayer(
-                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
                 {
                     maxZoom: 19,
                     attribution:
-                        "&copy; OpenStreetMap contributors"
+                        "Tiles &copy; Esri; map data &copy; OpenStreetMap contributors and other providers"
                 }
             );
 
